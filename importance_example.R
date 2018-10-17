@@ -48,8 +48,8 @@ c(mu_hat = mean(c_cmc), sd_cmc = sd(c_cmc) / sqrt(n))
 # ggplot(NULL) +
 #   geom_histogram(aes(x = exp(s_cmc), y = ..density..),
 #                  fill = 'white', col = 'black') +
-#   geom_line(aes(x = x, y = dlnorm(x, mu, sd)), 
-#             col = 'red') + 
+#   geom_line(aes(x = x, y = dlnorm(x, mean, vol)),
+#             col = 'red') +
 #   labs(x = "Stock price")
 # 
 # ggplot(NULL) +
