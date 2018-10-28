@@ -28,14 +28,15 @@ beta_fct <- function(c_1, c_1_bar, c_2, c_2_bar){
 # Arithmetic mean
 
 # We want to first simulate the log of the stock
-n <- 10000
-s <- 65
-k <- 55
-r <- 0.06
+set.seed(12345)
+n <- 100000
+s <- 50
+k <- 45
+r <- 0.05
 v <- 0.3
 
 mat <- 1        # e.g. four months
-ts  <- 200       # time steps, e.g. 22 per month
+ts  <- 250       # time steps, e.g. 22 per month
 dt  <- mat / ts
 
 z <- rnorm(ts * n, 0, 1)
@@ -107,14 +108,14 @@ analytical2 <- exp(-r * mat) * (exp(mu + 0.5 * sig ** 2) * pnorm(d1) - k * pnorm
 beta <- beta_fct(c_a, c_a_bar, c_g, c_g_bar)
 
 price <- mean(c_a - beta * (c_g - c_g_bar))
-sd    <- sd(c_a - beta * (c_g - c_g_bar)) / sqrt(n)
+se    <- sd(c_a - beta * (c_g - c_g_bar)) / sqrt(n)
 
 c(analytical  = analytical1,
   analytical  = analytical2,
   geometric   = mean(c_g),
   k_and_v     = c_g_bar,
-  geom_sd     = sd(c_g) / sqrt(n),
+  geom_se     = sd(c_g) / sqrt(n),
   arithmetic  = c_a_bar,
-  arith_sd    = sd(c_a) / sqrt(n),
+  arith_se    = sd(c_a) / sqrt(n),
   arith_cv    = price,
-  arith_cv_sd = sd)
+  arith_cv_se = se)

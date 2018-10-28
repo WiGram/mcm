@@ -4,6 +4,7 @@ cat("\014")
 options(scipen = 999) 
 library(stats4)       
 library(ggplot2)      
+set.seed(12345)
 
 # ============================================= #
 # ===== Asian options ========================= #
@@ -25,7 +26,7 @@ beta_fct <- function(c_1, c_1_bar, c_2, c_2_bar){
 }
 # --------------------------------------------- #
 
-n <- 10000
+n <- 100000
 s <- 100
 strike <- seq(90, 110, 10)
 # rate   <- seq(0.03,0.07,0.02)
@@ -102,3 +103,6 @@ for (r in rate){
   rownames(sds_cv[[a]]) <- paste0('k: ', strike)
   colnames(sds_cv[[a]]) <- paste0('v: ', sigma)
 }
+
+prices_cmc
+prices_cv
