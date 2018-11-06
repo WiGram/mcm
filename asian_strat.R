@@ -44,7 +44,7 @@ v <- 0.2
 mat <- 1
 ts  <- stop <- 500
 
-m <- 4      # Simulations per stratum
+m <- 2      # Simulations per stratum
 l <- n / m  # Strata (as many as poss')
 q <- m / n  # Sims per stratum relative to all sims
 p <- 1 / l  # Prob of being in any given stratum
@@ -62,35 +62,37 @@ for (i in 1:l){
 
 W <- bridge(data = W, stop = ts, n = n)
 
-df <- as.data.frame(t(W))
-df <- melt(df)
-df$rowid <- 1:ts
-
-ggplot(data = df, 
-       aes(x = rowid, 
-           y = value, 
-           group = factor(variable))) +
-  geom_line() +
-  labs(x = '', y = 'Brownian Bridges')
+# df <- as.data.frame(t(W))
+# df <- melt(df)
+# df$rowid <- 1:ts
+# 
+# ggplot(data = df, 
+#        aes(x = rowid, 
+#            y = value, 
+#            group = factor(variable))) +
+#   geom_line() +
+#   labs(x = '', y = 'Brownian Bridges')
 
 s_ss <- matrix(s, n, ts)
 mu  <- (r - 0.5 * v ** 2) / ts
 dc  <- exp(-r * mat)
 
+# test <- s * exp(mu * (2:ts) + v * W[,(2:ts)]) # <- should work!!
+
 for (t in 2:ts){
   s_ss[,t]  <- s * exp(mu * t + v * W[,t])
 }
 
-df_s <- as.data.frame(t(s_ss))
-df_s <- melt(df_s)
-df_s$rowid <- 1:ts
-
-ggplot(data = df_s, 
-       aes(x = rowid, 
-           y = value, 
-           group = factor(variable))) +
-  geom_line() +
-  labs(x = '', y = 'Stock price')
+# df_s <- as.data.frame(t(s_ss))
+# df_s <- melt(df_s)
+# df_s$rowid <- 1:ts
+# 
+# ggplot(data = df_s, 
+#        aes(x = rowid, 
+#            y = value, 
+#            group = factor(variable))) +
+#   geom_line() +
+#   labs(x = '', y = 'Stock price')
 
 s_avg <- rowMeans(s_ss)
 s_strat <- matrix(s_avg, nrow = m)
