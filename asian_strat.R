@@ -1,3 +1,8 @@
+# Importance sampling examples
+dev.off()             # delete plots
+rm(list = ls())       # delete variables
+cat("\014")           # clear console
+options(scipen = 999) # disable scientific notation
 library(reshape2)
 library(ggplot2)
 # ============================================= #
@@ -29,7 +34,7 @@ bridge <- function(data, stop, n){
 
 # ============================================= #
 
-n <- 1000
+n <- 10000
 
 #set.seed(12345)
 s <- 100
@@ -37,7 +42,7 @@ k <- 110
 r <- 0.05
 v <- 0.2
 mat <- 1
-ts  <- stop <- 10
+ts  <- stop <- 500
 
 m <- 4      # Simulations per stratum
 l <- n / m  # Strata (as many as poss')
@@ -73,7 +78,7 @@ mu  <- (r - 0.5 * v ** 2) / ts
 dc  <- exp(-r * mat)
 
 for (t in 2:ts){
-  s_ss[,t]  <- s * exp(mu * t + v * sqrt(t / ts) * W[,t])
+  s_ss[,t]  <- s * exp(mu * t + v * W[,t])
 }
 
 df_s <- as.data.frame(t(s_ss))
