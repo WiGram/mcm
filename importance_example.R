@@ -154,7 +154,7 @@ for (i in 1:len){
   for (j in 1:l){
     U <- runif(m, 0, 1)
     V <- (j - 1 + U) / l
-    z[, j] <- sqrt(t) * qnorm(V)
+    z[, j] <- qnorm(V)
   }
   
   # Stratified Sampling price
