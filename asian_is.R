@@ -61,7 +61,7 @@ find_y <- function(n, s, k, r, v, m, ts, seed = 12345){
     Z <- rep(vol * (y + k) / y, ts)
     S <- log(s) + drift + vol * Z
     for (t in 2:ts){
-      Z[t] <- Z[t-1]  - vol * exp(S[t-1]) / (n * y)
+      Z[t] <- Z[t-1]  - vol * exp(S[t-1]) / (ts * y)
       S[t] <- S[t-1] + drift + vol * Z[t]
     }
     S <- mean(exp(S))
