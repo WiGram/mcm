@@ -1,13 +1,13 @@
-dev.off()             
-rm(list = ls())       
-cat("\014")           
-options(scipen = 999) 
-library(stats4)       
-library(ggplot2)      
+# dev.off()             
+# rm(list = ls())       
+# cat("\014")           
+# options(scipen = 999) 
+# library(stats4)       
+# library(ggplot2)      
 
-n  <- 10000
+n  <- 100000
 s  <- 100
-k  <- 100
+k  <- 110
 r  <- 0.05
 v  <- 0.2
 m  <- 1
