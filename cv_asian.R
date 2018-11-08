@@ -37,14 +37,14 @@ bridge <- function(data, stop, n){
 }
 # --------------------------------------------- #
 
-n <- 10000
+n <- 1000
 s <- 100
 strike <- seq(90, 110, 10)
-# rate   <- seq(0.03,0.07,0.02)
+rate   <- seq(0.03,0.07,0.02)
 # strike <- 55
-rate   <- 0.05
-# sigma  <- seq(0.2,0.40,0.1)
-sigma <- 0.2
+# rate   <- 0.05
+sigma  <- seq(0.2,0.40,0.1)
+# sigma <- 0.2
 
 mat <- 1        # e.g. four months
 ts  <- 500       # time steps, e.g. 22 per month
@@ -70,7 +70,6 @@ W <- bridge(data = W, stop = ts, n = n)
 
 z <- rnorm(ts * n, 0, 1)
 z <- matrix(z, nrow = n, ncol = ts)
-Z <- matrix(z, nrow = n, ncol = ts) # Importance z
 S <- matrix(s, nrow = n, ncol = ts)
 B <- matrix(s, nrow = n, ncol = ts) # Bridge stock price
 I <- matrix(log(s), nrow = n, ncol = ts) # Importance stock price
@@ -101,7 +100,7 @@ for (r in rate){
       c <- 0
       
       while (abs(y - c) > 0.0001){
-        y <- (c + y) / 2
+        y  <- (c + y) / 2
         mu <- rep(vol * (y + k) / y, ts)
         pi <- log(s) + drift + vol * mu
         for (t in 2:ts){
@@ -112,7 +111,7 @@ for (r in rate){
         c  <- max(pi - k, 0)
       }
       
-      Z <- sweep(Z, 2, mu, '+')
+      Z <- sweep(z, 2, mu, '+')
       
       # Stock prices
       for (t in 2:ts){
@@ -140,7 +139,7 @@ for (r in rate){
       beta <- beta_fct(c_a, c_a_bar, c_g, c_g_bar)
       
       price_cmc[h, i] <- c_a_bar
-      sd_cmc[h, i] <- sd(c_a) / sqrt(n)
+      sd_cmc[h, i]    <- sd(c_a) / sqrt(n)
       
       price_cv[h, i] <- mean(c_a - beta * (c_g - c_g_bar))
       sd_cv[h, i]    <- sd(c_a - beta * (c_g - c_g_bar)) / sqrt(n)
