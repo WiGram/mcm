@@ -3,7 +3,7 @@
 library(ggplot2)
 library(reshape2)
 
-n  <- 10
+n  <- 100
 m  <- 500
 dt <- 1 / m
 s0 <- 100
@@ -32,4 +32,15 @@ ggplot(data = df,
            y = value, 
            group = factor(variable))) +
   geom_line() +
-  labs(x = '', y = 'Stock price')
+  labs(x = '', y = 'Stock price') +
+  ylim(25,250)
+
+x <- seq(25, 250, 0.01)
+ggplot(NULL) +
+  geom_histogram(aes(x = s_asian[, length(s_asian[1,])], y = ..density..),
+                 fill = 'white', col = 'black',
+                 bins = 100) +
+  geom_line(aes(x = x, y = dlnorm(x, log(s) + drift * ts, vol * sqrt(ts))),
+            col = 'red') +
+  labs(x = "Stock price")
+  # + coord_flip()

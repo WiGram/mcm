@@ -18,7 +18,7 @@ asian <- function(n, s, k, r, v, m, ts, mu = 0, seed = 12345){
   
   dt   <- m / ts
   dc   <- exp(-r*m)
-  vol  <- v * sqrt(m)
+  vol  <- v * sqrt(dt)
   z    <- rnorm(n * ts, 0, 1)
   z    <- matrix(z, nrow = n, ncol = ts)
   ifelse(mu == 0,

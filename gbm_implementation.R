@@ -1,4 +1,4 @@
-source("C:/Users/wigr11ab/Dropbox/KU/K3/MCM/gbm_function.R")
+source("C:/Users/wigr11ab/Dropbox/KU/K3/MCM/mcm_code/gbm_function.R")
 
 spot       <- 100
 interest   <- 0.01
