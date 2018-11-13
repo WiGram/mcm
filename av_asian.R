@@ -44,11 +44,9 @@ z <- rnorm(ts * n, 0, 1)
 z_av <- z[1:(length(z) / 2)]
 
 z    <- matrix(z, nrow = n, ncol = ts)
-z_av <- matrix(z, nrow = n / 2, ncol = ts)
 
-S  <- matrix(s, nrow = n, ncol = ts)
-S1 <- matrix(s, nrow = n / 2, ncol = ts)
-S2 <- matrix(s, nrow = n / 2, ncol = ts)
+S1 <- matrix(s, nrow = n, ncol = ts)
+S2 <- matrix(s, nrow = n, ncol = ts)
 
 prices_cmc  <- sds_cmc   <- list()
 prices_av   <- sds_av    <- list()
@@ -72,34 +70,31 @@ for (r in rate){
       vol   <- v * sqrt(dt)
       
       for (t in 2:ts){
-        S[, t]  <- S[, t-1] * exp(drift + vol * z[, t])
-        S1[,t] <- S1[, t-1] * exp(drift + vol * z_av[,t])
-        S2[,t] <- S2[, t-1] * exp(drift - vol * z_av[,t])
+        S1[, t] <- S1[, t-1] * exp(drift + vol * z[, t])
+        S2[, t] <- S2[, t-1] * exp(drift - vol * z[,t])
       }
       
       # CMC
-      mean_a   <- rowMeans(S)
+      mean_a   <- rowMeans(S1)
+      mean_b   <- rowMeans(S2)
       
       c_a      <- exp(-r * mat) * pmax(mean_a - k, 0)
+      c_b      <- exp(-r * mat) * pmax(mean_b - k, 0)
       c_a_bar  <- mean(c_a)
+      c_b_bar  <- mean(c_b)
 
       price_cmc[h, i] <- c_a_bar
       sd_cmc[h, i]    <- sd(c_a) / sqrt(n)
             
       #AV
-      mean_a_1 <- rowMeans(S1)
-      mean_a_2 <- rowMeans(S2)
-      
-      c_a_1    <- exp(-r * mat) * pmax(mean_a_1 - k, 0)
-      c_a_2    <- exp(-r * mat) * pmax(mean_a_2 - k, 0)
-      c_av     <- 0.5 * (c_a_1 + c_a_2)
+      c_av     <- 0.5 * (c_a + c_b)
       c_av_bar <- mean(c_av)
       
       price_av[h, i] <- c_av_bar
       sd_av[h, i]    <- sd(c_av) / sqrt(n)
       
       # CV
-      mean_g  <- exp(rowMeans(log(S)))
+      mean_g  <- exp(rowMeans(log(S1)))
       
       c_g     <- exp(-r * mat) * pmax(mean_g - k, 0)
       c_g_bar <- c_g_bar_fct(s, k, r, v, mat)

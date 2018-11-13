@@ -4,6 +4,8 @@
 # (Not needed - I wrote the function into this script directly)
 # source("C:/Users/wigr11ab/Dropbox/KU/K3/MCM/bs_function.R")
 
+library(ggplot2)
+
 # ================================== #
 # ===== Black Scholes method ======= #
 # ================================== #
@@ -11,8 +13,8 @@
 # Black Scholes parameters
 price  <- 100
 vol    <- 0.2
-mat    <- 10
-rate   <- 0.01
+mat    <- 1
+rate   <- 0.05
 strike <- 110
 
 # Black Scholes option pricing formula
@@ -33,7 +35,7 @@ bs <- function(price, vol, mat, rate, strike){
 # ================================== #
 
 # Random number parameters
-sims   <- 10000
+sims   <- 1000
 z_mean <- 0
 z_sd   <- 1
 
@@ -57,17 +59,30 @@ bs_mc <- function(sims,
            estimate = c_T,
            upper = c_T + 1.96 * se / sqrt(sims))
   
-  return(list(estimates = int, se = se))
+  return(list(stock = s,
+              option = c,
+              estimates = int, 
+              se = se))
 }
 
 # Monte carlo parameter estimation and interval
 mc_sim <- bs_mc(sims, 
                 z_mean, z_sd, 
                 price, vol, mat, rate, strike)
-mc_sim
+mc_sim[3:4]
+
+ggplot(NULL) +
+  geom_point(aes(x = mc_sim[[1]],
+                y = mc_sim[[2]]),
+             shape = 1, alpha = 0.2,
+             col = 'blue', size = 2) +
+  labs(x = 'Stock price', y = 'Option price')
+
 # Black Scholes price
 bs <- bs(price, vol, mat, rate, strike)
 bs
+
+
 
 # ============================== #
 # ===== Path dependence (pd) === #
