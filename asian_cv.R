@@ -29,7 +29,7 @@ beta_fct <- function(c_1, c_1_bar, c_2, c_2_bar){
 
 # We want to first simulate the log of the stock
 set.seed(12345)
-n <- 100000
+n <- 10000
 s <- 50
 k <- 45
 r <- 0.05
@@ -85,37 +85,37 @@ analytical2 <- exp(-r * mat) * (exp(mu + 0.5 * sig ** 2) * pnorm(d1) - k * pnorm
 
 # Here we try to immitate Glasserman
 
-# ggplot(NULL) +
-#   geom_point(aes(x = S[,ts], y = c_a),
-#              alpha = 0.3, fill = NA, shape = 'o') +
-#   labs(x = 'Stock price', y = 'Arithmetic Mean Asian call option')
-# 
-# ggplot(NULL) +
-#   geom_point(aes(x = c_e, y = c_a),
-#              alpha = 0.3, fill = NA, shape = 'o') +
-#   labs(x = 'European Call option', y = 'Arithmetic Mean Asian call option')
-# 
-# ggplot(NULL) +
-#   geom_point(aes(x = c_g, y = c_a),
-#              alpha = 0.3, fill = NA, shape = 'o') +
-#   labs(x = 'Geometric Mean Asian call option', y = 'Arithmetic Mean Asian call option')
+ggplot(NULL) +
+  geom_point(aes(x = S[,ts], y = c_a),
+             alpha = 0.3, fill = NA, shape = 'o') +
+  labs(x = 'Stock price', y = 'Arithmetic Mean Asian call option')
+
+ggplot(NULL) +
+  geom_point(aes(x = c_e, y = c_a),
+             alpha = 0.3, fill = NA, shape = 'o') +
+  labs(x = 'European Call option', y = 'Arithmetic Mean Asian call option')
+
+ggplot(NULL) +
+  geom_point(aes(x = c_g, y = c_a),
+             alpha = 0.3, fill = NA, shape = 'o') +
+  labs(x = 'Geometric Mean Asian call option', y = 'Arithmetic Mean Asian call option')
 
 # ============================================= #
 # ===== Using geom as control variate for ===== #
 # ===== arithmetic asian call option      ===== #
 # ============================================= #
-
-beta <- beta_fct(c_a, c_a_bar, c_g, c_g_bar)
-
-price <- mean(c_a - beta * (c_g - c_g_bar))
-se    <- sd(c_a - beta * (c_g - c_g_bar)) / sqrt(n)
-
-c(analytical  = analytical1,
-  analytical  = analytical2,
-  geometric   = mean(c_g),
-  k_and_v     = c_g_bar,
-  geom_se     = sd(c_g) / sqrt(n),
-  arithmetic  = c_a_bar,
-  arith_se    = sd(c_a) / sqrt(n),
-  arith_cv    = price,
-  arith_cv_se = se)
+# 
+# beta <- beta_fct(c_a, c_a_bar, c_g, c_g_bar)
+# 
+# price <- mean(c_a - beta * (c_g - c_g_bar))
+# se    <- sd(c_a - beta * (c_g - c_g_bar)) / sqrt(n)
+# 
+# c(analytical  = analytical1,
+#   analytical  = analytical2,
+#   geometric   = mean(c_g),
+#   k_and_v     = c_g_bar,
+#   geom_se     = sd(c_g) / sqrt(n),
+#   arithmetic  = c_a_bar,
+#   arith_se    = sd(c_a) / sqrt(n),
+#   arith_cv    = price,
+#   arith_cv_se = se)

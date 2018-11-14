@@ -37,7 +37,7 @@ bridge <- function(data, stop, n){
 }
 # --------------------------------------------- #
 
-n <- 1000
+n <- 10000
 s <- 100
 strike <- seq(90, 110, 10)
 rate   <- seq(0.03,0.07,0.02)
@@ -70,7 +70,7 @@ W <- bridge(data = W, stop = ts, n = n)
 
 z <- rnorm(ts * n, 0, 1)
 z <- matrix(z, nrow = n, ncol = ts)
-a <- rbind(z[1:(n/2),],-z[1:(n/2),])
+w <- rbind(z[1:(n/2),],-z[1:(n/2),])
 S <- matrix(s, nrow = n, ncol = ts)
 A <- matrix(s, nrow = n, ncol = ts)
 B <- matrix(s, nrow = n, ncol = ts) # Bridge stock price
@@ -122,7 +122,7 @@ for (r in rate){
       # Stock prices
       for (t in 2:ts){
         S[,t] <- S[, t-1] * exp(drift + vol * z[,t])
-        A[,t] <- A[, t-1] * exp(drift + vol * a[,t])
+        A[,t] <- A[, t-1] * exp(drift + vol * w[,t])
         B[,t] <- s * exp(drift * t + v * W[,t])
         I[,t] <- I[, t-1] + drift + vol * Z[,t]
       }
@@ -230,9 +230,9 @@ for (r in rate){
   colnames(sds_is[[a]]) <- paste0('v: ', sigma)
 }
 
-prices_gm
-prices_cmc
-prices_av
-prices_cv
-prices_ss
-prices_is
+prices_cmc$`r: 0.05`
+prices_gm$`r: 0.05`
+prices_av$`r: 0.05`
+prices_cv$`r: 0.05`
+prices_ss$`r: 0.05`
+prices_is$`r: 0.05`

@@ -1,4 +1,5 @@
 library(ggplot2)
+library(reshape2)
 
 n <- 100
 s <- 100
@@ -9,6 +10,7 @@ mat <- 1
 dt  <- 1 / 1000
 ts  <- mat / dt
 
+set.seed(12345)
 z <- matrix(rnorm(n * ts, 0, 1), n, ts)
 s_asian <- matrix(s, n, ts)
 
