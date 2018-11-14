@@ -122,11 +122,12 @@ for (i in 1:trials){
 opt <- which.min(k_sd_is)
 
 price_is <- sd_is <- rep(0, len)
+log_s <- matrix(0, nrow = n, ncol = len)
 for (i in 1:len){
-  m <- n_sims[i]
+  m          <- n_sims[i]
   log_s[, i] <- rnorm(n = m, mean = mean_k[opt], sd = vol)
-  S[, i] <- exp(log_s[, i])
-  C[, i] <- dc * pmax(S[, i] - k, 0)
+  S[, i]     <- exp(log_s[, i])
+  C[, i]     <- dc * pmax(S[, i] - k, 0)
   
   f      <- dnorm(log_s[, i], mean = mean_k[index], sd = vol)
   g      <- dnorm(log_s[, i], mean = mean_k[opt],   sd = vol)
