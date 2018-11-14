@@ -3,7 +3,7 @@ library(ggplot2)
 # ===== Initial parameters ==================== #
 n   <- 10000
 s   <- 100
-k   <- 110
+k   <- 160
 r   <- 0.05
 v   <- 0.2
 mat <- 1
@@ -51,6 +51,10 @@ k_star <- 90 + seq(0,5*18,5)
 trials <- length(k_star)
 mean_k <- log(k_star) + drift
 
+# CMC mean identified
+index     <- which(k_star == s)
+cmc_drift <- mean_k[index]
+
 # Matrix and vector initialisation
 k_price_is <- k_sd_is  <- rep(0, trials)
 
@@ -67,12 +71,10 @@ for (i in 1:trials){
   k_sd_is[i]    <- sd(C * w) / sqrt(n)
 }
 
-# Optimal and cmc drift specified
-index     <- which(k_star == s)
-cmc_drift <- mean_k[index]
-
+# Optimal drift specified
 opt       <- which.min(k_sd_is)
 opt_drift <- mean_k[opt]
+
 # ============================================= #
 
 # ============================================= #
@@ -125,10 +127,9 @@ ggplot(NULL) +
   geom_line(aes(x = x,
                 y = price,
                 colour = 'Black Scholes price')) +
-  ylim(4,8) +
   labs(x = 'Simulations', y = 'Option price') +
-  scale_colour_manual(values = c('IS price' = 'red', 
-                                 'Black Scholes price' = 'green', 
+  scale_colour_manual(values = c('IS price' = 'red',
+                                 'Black Scholes price' = 'green',
                                  'CMC price' = 'blue'),
                       breaks=c('IS price',
                                'Black Scholes price',
