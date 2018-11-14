@@ -70,16 +70,22 @@ W <- bridge(data = W, stop = ts, n = n)
 
 z <- rnorm(ts * n, 0, 1)
 z <- matrix(z, nrow = n, ncol = ts)
+a <- rbind(z[1:(n/2),],-z[1:(n/2),])
 S <- matrix(s, nrow = n, ncol = ts)
+A <- matrix(s, nrow = n, ncol = ts)
 B <- matrix(s, nrow = n, ncol = ts) # Bridge stock price
 I <- matrix(log(s), nrow = n, ncol = ts) # Importance stock price
 
 prices_cmc <- sds_cmc <- list()
+prices_gm  <- sds_gm  <- list()
+prices_av  <- sds_av  <- list()
 prices_cv  <- sds_cv  <- list()
 prices_ss  <- sds_ss  <- list()
 prices_is  <- sds_is  <- list()
 
 price_cmc <- sd_cmc <- matrix(0, nrow = length(strike), ncol = length(sigma))
+price_gm  <- sd_gm  <- matrix(0, nrow = length(strike), ncol = length(sigma))
+price_av  <- sd_av  <- matrix(0, nrow = length(strike), ncol = length(sigma))
 price_cv  <- sd_cv  <- matrix(0, nrow = length(strike), ncol = length(sigma))
 price_ss  <- sd_ss  <- matrix(0, nrow = length(strike), ncol = length(sigma))
 price_is  <- sd_is  <- matrix(0, nrow = length(strike), ncol = length(sigma))
@@ -116,17 +122,21 @@ for (r in rate){
       # Stock prices
       for (t in 2:ts){
         S[,t] <- S[, t-1] * exp(drift + vol * z[,t])
+        A[,t] <- A[, t-1] * exp(drift + vol * a[,t])
         B[,t] <- s * exp(drift * t + v * W[,t])
         I[,t] <- I[, t-1] + drift + vol * Z[,t]
       }
       
       arith_mean   <- rowMeans(S)
+      anti_mean    <- rowMeans(A)
       geom_mean    <- exp(rowMeans(log(S)))
       bridge_mean  <- rowMeans(B)
       bridge_strat <- matrix(bridge_mean, nrow = m)
       is_mean      <- rowMeans(exp(I))
       
       c_a <- dc * pmax(arith_mean - k, 0)
+      c_v <- 0.5 * dc * (pmax(anti_mean[1:(n/2)] - k, 0) + 
+                           pmax(anti_mean[(n/2):n] - k, 0))
       c_g <- dc * pmax(geom_mean  - k, 0)
       c_s <- dc * pmax(bridge_strat - k, 0)
       c_i <- dc * pmax(is_mean - k, 0) * 
@@ -134,12 +144,21 @@ for (r in rate){
                       0.5 * c(mu %*% mu))
       
       c_a_bar <- mean(c_a)
+      
+      c_v_bar <- mean(c_v)
+      
       c_g_bar <- c_g_bar_fct(s, k, r, v, mat)
       
       beta <- beta_fct(c_a, c_a_bar, c_g, c_g_bar)
       
       price_cmc[h, i] <- c_a_bar
       sd_cmc[h, i]    <- sd(c_a) / sqrt(n)
+      
+      price_gm[h, i] <- mean(c_g)
+      sd_gm[h, i]    <- sd(c_g) / sqrt(n)
+      
+      price_av[h, i] <- c_v_bar
+      sd_av[h, i]    <- sd(c_v) / sqrt(n)
       
       price_cv[h, i] <- mean(c_a - beta * (c_g - c_g_bar))
       sd_cv[h, i]    <- sd(c_a - beta * (c_g - c_g_bar)) / sqrt(n)
@@ -170,6 +189,22 @@ for (r in rate){
   rownames(sds_cmc[[a]]) <- paste0('k: ', strike)
   colnames(sds_cmc[[a]]) <- paste0('v: ', sigma)
   
+  prices_gm[[a]] <- price_gm
+  rownames(prices_gm[[a]]) <- paste0('k: ', strike)
+  colnames(prices_gm[[a]]) <- paste0('v: ', sigma)
+  
+  sds_gm[[a]] <- sd_gm
+  rownames(sds_gm[[a]]) <- paste0('k: ', strike)
+  colnames(sds_gm[[a]]) <- paste0('v: ', sigma)
+  
+  prices_av[[a]] <- price_av
+  rownames(prices_av[[a]]) <- paste0('k: ', strike)
+  colnames(prices_av[[a]]) <- paste0('v: ', sigma)
+  
+  sds_av[[a]] <- sd_av
+  rownames(sds_av[[a]]) <- paste0('k: ', strike)
+  colnames(sds_av[[a]]) <- paste0('v: ', sigma)
+  
   prices_cv[[a]] <- price_cv
   rownames(prices_cv[[a]]) <- paste0('k: ', strike)
   colnames(prices_cv[[a]]) <- paste0('v: ', sigma)
@@ -195,7 +230,9 @@ for (r in rate){
   colnames(sds_is[[a]]) <- paste0('v: ', sigma)
 }
 
+prices_gm
 prices_cmc
+prices_av
 prices_cv
 prices_ss
 prices_is
