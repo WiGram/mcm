@@ -39,9 +39,9 @@ bridge <- function(data, stop, n){
 
 n <- 10000
 s <- 100
-strike <- seq(90, 110, 10)
+# strike <- seq(80, 110, 10)
 rate   <- seq(0.03,0.07,0.02)
-# strike <- 55
+strike <- 130
 # rate   <- 0.05
 sigma  <- seq(0.2,0.40,0.1)
 # sigma <- 0.2
@@ -96,25 +96,28 @@ i <- 1
 for (r in rate){
   for (v in sigma){
     for (k in strike){
+      # r <- 0.03
+      # v <- 0.20
+      # k <- 120
       
       drift <- (r - 0.5 * v ** 2) * dt
       vol   <- v * sqrt(dt)
       dc    <- exp(-r * mat)
       
       # importance sampling
-      y <- 5
-      c <- 0
-      
-      while (abs(y - c) > 0.0001){
-        y  <- (c + y) / 2
+      a <- 0
+      b <- 10
+
+      while (abs(a - b) > 0.0001){
+        y <- (a + b) / 2
         mu <- rep(vol * (y + k) / y, ts)
-        pi <- log(s) + drift + vol * mu
+        pi <- exp(log(s) + drift + vol * mu)
         for (t in 2:ts){
-          mu[t] <- mu[t-1] - vol * exp(pi[t-1]) / (ts * y)
-          pi[t] <- pi[t-1] + drift + vol * mu[t]
+          mu[t] <- mu[t-1] - vol * pi[t-1] / (ts * y)
+          pi[t] <- pi[t-1] * exp(drift + vol * mu[t])
         }
-        pi <- mean(exp(pi))
-        c  <- max(pi - k, 0)
+        c <- mean(pi) - k - y
+        ifelse(c > 0, a <- y, b <- y)
       }
       
       Z <- sweep(z, 2, mu, '+')
