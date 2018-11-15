@@ -39,9 +39,9 @@ bridge <- function(data, stop, n){
 
 n <- 10000
 s <- 100
-# strike <- seq(80, 110, 10)
+strike <- seq(80, 180, 10)
 rate   <- seq(0.03,0.07,0.02)
-strike <- 130
+# strike <- 130
 # rate   <- 0.05
 sigma  <- seq(0.2,0.40,0.1)
 # sigma <- 0.2
@@ -106,7 +106,7 @@ for (r in rate){
       
       # importance sampling
       a <- 0
-      b <- 10
+      b <- 20
 
       while (abs(a - b) > 0.0001){
         y <- (a + b) / 2

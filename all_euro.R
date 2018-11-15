@@ -7,7 +7,6 @@ library(stats4)       # base package; use for mle()
 # install.packages("ggplot2") # if not already installed
 library(ggplot2)      # Graphing package (sweet)
 
-
 # ============================================= #
 # ===== Black Scholes ========================= #
 # ============================================= #
@@ -70,6 +69,36 @@ c(mu_hat = mean(c_cmc), sd_cmc = sd(c_cmc) / sqrt(n))
 #              alpha = 0.1, fill = NA, col = 'blue', shape = 'o') +
 #   labs(x = 'Stock price', y = 'Option price')
 
+# ============================================= #
+# ===== Importance Sampling: finding weights == #
+# ============================================= #
+
+# We shift the mean using k_star
+shift  <- seq(90,180,1)
+trials <- length(shift)
+mean_k <- log(shift) + (r - 0.5 * v ** 2) * t
+
+# Matrix and vector initialisation
+k_price_is <- k_sd_is  <- rep(0, trials)
+
+# Important: f distribution must be the k_star == s
+index  <- which(shift == s)
+
+# All computations are done in this loop
+for (i in 1:trials){
+  log_s <- rnorm(n = n, mean = mean_k[i], sd = vol)
+  C     <- dc * pmax(exp(log_s) - k, 0)
+  
+  f <- dnorm(log_s, mean = mean_k[index], sd = vol)
+  g <- dnorm(log_s, mean = mean_k[i],     sd = vol)
+  w <- f / g
+  
+  k_price_is[i] <- mean(C * w)
+  k_sd_is[i]    <- sd(C * w) / sqrt(n)
+}
+
+opt <- which.min(k_sd_is)
+
 
 # ============================================= #
 # ===== Simulating varying amount of paths ==== #
@@ -78,88 +107,58 @@ c(mu_hat = mean(c_cmc), sd_cmc = sd(c_cmc) / sqrt(n))
 n_sims <- 10 ** (3:6)
 len    <- length(n_sims)
 
-price_cmc <- sd_cmc <- rep(0, len)
+price_cmc <- sd_cmc <- rep(0,len)
+price_is  <- sd_is  <- rep(0,len)
+price_cv  <- sd_cv  <- rep(0,len)
+price_ss  <- sd_ss  <- rep(0,len)
+price_av  <- sd_av  <- rep(0,len)
 
 for (i in 1:len){
   n     <- n_sims[i]
-  s_cmc <- rnorm(n = n, mean = mean, sd = vol)
+  z     <- rnorm(n = n, mean = 0, sd = 1)
+  
+  # =========================================== #
+  # ===== Crude Monte Carlo =================== #
+  # =========================================== #
+  
+  s_cmc <- mean + vol * z
   c_cmc <- dc * pmax(exp(s_cmc) - k, 0)
   
   price_cmc[i] <- mean(c_cmc)
   sd_cmc[i]    <- sd(c_cmc) / sqrt(n)
-}
 
-# ============================================= #
-# ===== Importance Sampling =================== #
-# ============================================= #
+  # =========================================== #
+  # ===== Importance sampling ================= #
+  # =========================================== #
 
-# We shift the mean using k_star
-k_star <- 10*9:18
-trials <- length(k_star)
-mean_k <- log(k_star) + (r - 0.5 * v ** 2) * t
-
-# Matrix and vector initialisation
-w <- C <- S <- log_s <- matrix(0, nrow = n, ncol = trials)
-k_price_is <- k_sd_is  <- rep(0, trials)
-
-# Important: f distribution must be the k_star == s
-index  <- which(k_star == s)
-
-# All computations are done in this loop
-for (i in 1:trials){
-  log_s[, i] <- rnorm(n = n, mean = mean_k[i], sd = vol)
-  S[, i]  <- exp(log_s[, i])
-  C[, i]  <- dc * pmax(S[, i] - k, 0)
+  ls_is <- mean_k[opt] + vol * z
+  C     <- dc * pmax(exp(ls_is) - k, 0)
   
-  f       <- dnorm(log_s[, i], mean = mean_k[index], sd = vol)
-  g       <- dnorm(log_s[, i], mean = mean_k[i],     sd = vol)
-  w[, i]  <- f / g
+  f <- dnorm(ls_is, mean = mean_k[index], sd = vol)
+  g <- dnorm(ls_is, mean = mean_k[opt],   sd = vol)
+  w <- f / g
   
-  k_price_is[i] <- mean(C[, i] * w[, i])
-  k_sd_is[i]    <- sd(C[, i] * w[, i]) / sqrt(n)
-}
+  price_is[i] <- mean(C * w)
+  sd_is[i]    <- sd(C * w) / sqrt(n)
 
-opt <- which.min(k_sd_is)
+  # ============================================= #
+  # ===== Stratified Sampling =================== #
+  # ============================================= #
 
-price_is <- sd_is <- rep(0, len)
-log_s <- matrix(0, nrow = n, ncol = len)
-for (i in 1:len){
-  m          <- n_sims[i]
-  log_s[, i] <- rnorm(n = m, mean = mean_k[opt], sd = vol)
-  S[, i]     <- exp(log_s[, i])
-  C[, i]     <- dc * pmax(S[, i] - k, 0)
+  m <- 4      # Simulations per stratum
+  l <- n / m  # Strata (as many as poss')
+  q <- m  / n # Sims per stratum relative to all sims
+  p <- 1  / l # Equiprobable strata (note p = q?)
   
-  f      <- dnorm(log_s[, i], mean = mean_k[index], sd = vol)
-  g      <- dnorm(log_s[, i], mean = mean_k[opt],   sd = vol)
-  
-  w[, i] <- f / g
-  
-  price_is[i] <- mean(C[, i] * w[, i])
-  sd_is[i]    <- sd(C[, i] * w[, i]) / sqrt(m)
-}
-
-# ============================================= #
-# ===== Stratified Sampling =================== #
-# ============================================= #
-
-price_ss <- sd_ss <- rep(0,len)
-for (i in 1:len){
-  nn <- n_sims[i]
-  
-  l <- nn / 2   # Strata (as many as poss')
-  m <- nn / l   # Simulations per stratum
-  q <- m  / nn  # Sims per stratum relative to all sims
-  p <- 1  / l   # Equiprobable strata
-  
-  z <- matrix(0, m, l) 
+  z_ss <- matrix(0, m, l) 
   for (j in 1:l){
     U <- runif(m, 0, 1)
     V <- (j - 1 + U) / l
-    z[, j] <- qnorm(V)
+    z_ss[, j] <- qnorm(V)
   }
   
   # Stratified Sampling price
-  s_ss  <- mean + vol * z
+  s_ss  <- mean + vol * z_ss
   c_ss  <- dc * pmax(exp(s_ss) - k, 0)
   
   price_ss[i]  <- sum(p * colMeans(c_ss))
@@ -170,36 +169,26 @@ for (i in 1:len){
     var <- p ** 2 * var(c_ss[,j]) / q
     var_ss <- var_ss + var
   }
-  sd_ss[i] <- sqrt(var_ss) / sqrt(nn)
-}
+  sd_ss[i] <- sqrt(var_ss) / sqrt(n)
 
-# ============================================= #
-# ===== Antithetic Variates =================== #
-# ============================================= #
-
-price_av <- sd_av <- rep(0,len)
-for (i in 1:len){
-  m  <- n_sims[i] / 2
-  s1 <- rnorm(m, mean = mean, sd = vol)
-  s2 <- 2 * mean - s1
-  c1 <- dc * pmax(exp(s1) - k, 0)
-  c2 <- dc * pmax(exp(s2) - k, 0)
-  po <- 0.5 * (c1 + c2)
-  price_av[i] <- sum(po) / m
-  sd_av[i]    <- sd(po) / sqrt(m)
-}
-
-# ============================================= #
-# ===== Control Variates ====================== #
-# ============================================= #
-
-# W = E[X] + beta (Y - E[Y])
-# X is the call option, choose Y to be stock
-
-price_cv <- sd_cv <- rep(0, len)
-for (i in 1:len){
-  n <- n_sims[i]
-  s_cv  <- exp(rnorm(n = n, mean = mean, sd = vol))
+  # ============================================= #
+  # ===== Antithetic Variates =================== #
+  # ============================================= #
+  m     <- n_sims[i] / 2
+  z_av  <- c(z[1:m], -z[1:m])
+  log_s <- mean + vol * z_av
+  c     <- dc * pmax(exp(log_s) - k, 0)
+  
+  payoff      <- 0.5 * (c[1:m] + c[(m+1): length(c)])
+  price_av[i] <- sum(payoff) / m
+  sd_av[i]    <- sd(payoff) / sqrt(m)
+  
+  # ============================================= #
+  # ===== Control Variates ====================== #
+  # ============================================= #
+  # W = E[X] + beta (Y - E[Y])
+  # X is the call option, choose Y to be stock
+  s_cv  <- exp(s_cmc)
   s_bar <- s * exp(r * t)
   c_cv  <- dc * pmax(s_cv - k, 0)
   c_bar <- mean(c_cv)
