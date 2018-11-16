@@ -39,9 +39,9 @@ bridge <- function(data, stop, n){
 
 n <- 10000
 s <- 100
-strike <- seq(80, 180, 10)
+strike <- seq(80, 120, 10)
 rate   <- seq(0.03,0.07,0.02)
-# strike <- 130
+# strike <- 160
 # rate   <- 0.05
 sigma  <- seq(0.2,0.40,0.1)
 # sigma <- 0.2
@@ -75,6 +75,7 @@ S <- matrix(s, nrow = n, ncol = ts)
 A <- matrix(s, nrow = n, ncol = ts)
 B <- matrix(s, nrow = n, ncol = ts) # Bridge stock price
 I <- matrix(log(s), nrow = n, ncol = ts) # Importance stock price
+ISSS <- matrix(s, nrow = n, ncol = ts) # Importance stratified fuck
 
 prices_cmc <- sds_cmc <- list()
 prices_gm  <- sds_gm  <- list()
@@ -82,6 +83,7 @@ prices_av  <- sds_av  <- list()
 prices_cv  <- sds_cv  <- list()
 prices_ss  <- sds_ss  <- list()
 prices_is  <- sds_is  <- list()
+prices_isss <- sds_isss <- list()
 
 price_cmc <- sd_cmc <- matrix(0, nrow = length(strike), ncol = length(sigma))
 price_gm  <- sd_gm  <- matrix(0, nrow = length(strike), ncol = length(sigma))
@@ -89,6 +91,7 @@ price_av  <- sd_av  <- matrix(0, nrow = length(strike), ncol = length(sigma))
 price_cv  <- sd_cv  <- matrix(0, nrow = length(strike), ncol = length(sigma))
 price_ss  <- sd_ss  <- matrix(0, nrow = length(strike), ncol = length(sigma))
 price_is  <- sd_is  <- matrix(0, nrow = length(strike), ncol = length(sigma))
+price_isss <- sd_isss <- matrix(0, nrow = length(strike), ncol = length(sigma))
 
 h <- 1
 i <- 1
@@ -96,10 +99,10 @@ i <- 1
 for (r in rate){
   for (v in sigma){
     for (k in strike){
-      # r <- 0.03
-      # v <- 0.20
-      # k <- 120
-      
+      # r <- rate[1]   # 0.03
+      # v <- sigma[1]  # 0.20
+      # k <- strike[1] # 130
+
       drift <- (r - 0.5 * v ** 2) * dt
       vol   <- v * sqrt(dt)
       dc    <- exp(-r * mat)
@@ -122,12 +125,30 @@ for (r in rate){
       
       Z <- sweep(z, 2, mu, '+')
       
+      # applying stratification to 
+      # importance sampling
+      u <- mu / sqrt(c(mu %*% mu))
+      c <- diag(ts) - u %*% t(u)
+      
+      SSIS <- matrix(0, nrow = n, ncol = ts)
+      for (ii in 1:l){
+        a <- (ii - 1) * m
+        for (j in 1:m){
+          U <- runif(1,0,1)
+          V <- (ii - 1 + U) / l
+          SSIS[a + j,] <- u * qnorm(V) + 
+            c(c %*% rnorm(ts))
+        }
+      }
+      
       # Stock prices
       for (t in 2:ts){
         S[,t] <- S[, t-1] * exp(drift + vol * z[,t])
         A[,t] <- A[, t-1] * exp(drift + vol * w[,t])
         B[,t] <- s * exp(drift * t + v * W[,t])
         I[,t] <- I[, t-1] + drift + vol * Z[,t]
+
+        ISSS[,t] <- ISSS[,t-1] * exp(drift + vol * SSIS[,t])
       }
       
       arith_mean   <- rowMeans(S)
@@ -136,15 +157,18 @@ for (r in rate){
       bridge_mean  <- rowMeans(B)
       bridge_strat <- matrix(bridge_mean, nrow = m)
       is_mean      <- rowMeans(exp(I))
+      isss_mean    <- rowMeans(ISSS)
+      isss_strat   <- matrix(isss_mean, nrow = m)
       
       c_a <- dc * pmax(arith_mean - k, 0)
       c_v <- 0.5 * dc * (pmax(anti_mean[1:(n/2)] - k, 0) + 
-                           pmax(anti_mean[(n/2):n] - k, 0))
+                           pmax(anti_mean[(1 + n/2):n] - k, 0))
       c_g <- dc * pmax(geom_mean  - k, 0)
       c_s <- dc * pmax(bridge_strat - k, 0)
       c_i <- dc * pmax(is_mean - k, 0) * 
                 exp(-rowSums(Z %*% diag(mu)) + 
                       0.5 * c(mu %*% mu))
+      c_isss <- dc * pmax(isss_strat - k, 0)
       
       c_a_bar <- mean(c_a)
       
@@ -176,6 +200,14 @@ for (r in rate){
       
       price_is[h, i] <- mean(c_i)
       sd_is[h, i]    <- sd(c_i) / sqrt(n)
+      
+      price_isss[h, i] <- sum(p * colMeans(c_isss))
+      var_isss <- 0
+      for (j in 1:l){
+        var      <- p ** 2 * var(c_isss[, j]) / q
+        var_isss <- var_isss + var
+      }
+      sd_isss[h, i]    <- sqrt(var_isss) / sqrt(n)
       h <- h + 1
     }
     h <- 1
@@ -183,6 +215,7 @@ for (r in rate){
   }
   h <- 1
   i <- 1
+  
   a <- paste0('r: ', r)
   prices_cmc[[a]] <- price_cmc
   rownames(prices_cmc[[a]]) <- paste0('k: ', strike)
@@ -231,6 +264,14 @@ for (r in rate){
   sds_is[[a]] <- sd_is
   rownames(sds_is[[a]]) <- paste0('k: ', strike)
   colnames(sds_is[[a]]) <- paste0('v: ', sigma)
+  
+  prices_isss[[a]] <- price_isss
+  rownames(prices_isss[[a]]) <- paste0('k: ', strike)
+  colnames(prices_isss[[a]]) <- paste0('v: ', sigma)
+
+  sds_isss[[a]] <- sd_isss
+  rownames(sds_isss[[a]]) <- paste0('k: ', strike)
+  colnames(sds_isss[[a]]) <- paste0('v: ', sigma)
 }
 
 prices_cmc$`r: 0.05`
@@ -239,3 +280,4 @@ prices_av$`r: 0.05`
 prices_cv$`r: 0.05`
 prices_ss$`r: 0.05`
 prices_is$`r: 0.05`
+prices_isss$`r: 0.05`
