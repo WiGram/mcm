@@ -1,7 +1,7 @@
 library(ggplot2)
 library(reshape2)
 
-n <- 100
+n <- 100000
 s <- 100
 k <- 110
 r <- 0.05
@@ -25,9 +25,11 @@ s_avg <- rowMeans(s_asian)
 c_each <- exp(-r * mat) * pmax(s_avg - k, 0)
 c <- mean(c_each)
 sd <- sd(c_each) / sqrt(n)
+fraction_pos_payoff <- sum(c_each > 0) / length(c_each)
 
 c
 sd
+fraction_pos_payoff
 # Plotting
 df <- as.data.frame(t(s_asian))
 df <- melt(df)

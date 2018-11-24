@@ -39,7 +39,7 @@ bridge <- function(data, stop, n){
 
 n <- 10000
 s <- 100
-strike <- seq(80, 120, 10)
+strike <- seq(90, 110, 10)
 rate   <- seq(0.03,0.07,0.02)
 # strike <- 160
 # rate   <- 0.05
@@ -74,7 +74,7 @@ w <- rbind(z[1:(n/2),],-z[1:(n/2),])
 S <- matrix(s, nrow = n, ncol = ts)
 A <- matrix(s, nrow = n, ncol = ts)
 B <- matrix(s, nrow = n, ncol = ts) # Bridge stock price
-I <- matrix(log(s), nrow = n, ncol = ts) # Importance stock price
+I <- matrix(s, nrow = n, ncol = ts) # Importance stock price
 ISSS <- matrix(s, nrow = n, ncol = ts) # Importance stratified fuck
 
 prices_cmc <- sds_cmc <- list()
@@ -146,7 +146,7 @@ for (r in rate){
         S[,t] <- S[, t-1] * exp(drift + vol * z[,t])
         A[,t] <- A[, t-1] * exp(drift + vol * w[,t])
         B[,t] <- s * exp(drift * t + v * W[,t])
-        I[,t] <- I[, t-1] + drift + vol * Z[,t]
+        I[,t] <- I[, t-1] * exp(drift + vol * Z[,t])
 
         ISSS[,t] <- ISSS[,t-1] * exp(drift + vol * SSIS[,t])
       }
@@ -156,7 +156,7 @@ for (r in rate){
       geom_mean    <- exp(rowMeans(log(S)))
       bridge_mean  <- rowMeans(B)
       bridge_strat <- matrix(bridge_mean, nrow = m)
-      is_mean      <- rowMeans(exp(I))
+      is_mean      <- rowMeans(I)
       isss_mean    <- rowMeans(ISSS)
       isss_strat   <- matrix(isss_mean, nrow = m)
       
