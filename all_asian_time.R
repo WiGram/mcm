@@ -58,6 +58,18 @@ findShift <- function(r, v, k, ts, dt){
   }
 }
 
+# Stock price
+asianStock <- function(r, v, dt, z){
+  drift <- (r - 0.5 * v ** 2) * dt
+  vol   <- v * sqrt(dt)
+  
+  stock <- matrix(s, nrow = n, ncol = ts)
+  for (t in 2:ts){
+    stock[, t] <- stock[, t-1] * exp(drift + vol * z[, t])
+  }
+  return(stock)
+}
+
 emptyMatrix <- function(strike, sigma){
   return(matrix(0, nrow = length(strike), ncol = length(sigma)))
 }
@@ -97,10 +109,7 @@ asianRandomSS <- function(n, m, ts, mat){
 }
 
 # --------------------------------------------- #
-asianRandomIS <- function(n, v, k, mu, ts, dt){
-  drift <- (r - 0.5 * v ** 2) * dt
-  vol   <- v * sqrt(dt)
-  
+asianRandomIS <- function(n, mu, ts){
   z  <- asianRandomNumbers(n, ts)
   Z  <- sweep(z, 2, mu, '+')
   return(Z)
@@ -124,18 +133,6 @@ asianISSS <- function(z, vol, drift, k, ts, s){
     }
   }
   return(Z)
-}
-
-# --------------------------------------------- #
-asianStock <- function(r, v, dt, z){
-  drift <- (r - 0.5 * v ** 2) * dt
-  vol   <- v * sqrt(dt)
-  
-  stock <- matrix(s, nrow = n, ncol = ts)
-  for (t in 2:ts){
-    stock[, t] <- stock[, t-1] * exp(drift + vol * z[, t])
-  }
-  return(stock)
 }
 # --------------------------------------------- #
 
@@ -195,12 +192,11 @@ asianCV <- function(s, k, r, v, dt, ts, mat, n){
   c_a       <- exp(-r * mat) * pmax(arithMean - k, 0)
   c_g       <- exp(-r * mat) * pmax(geomMean - k,  0)
   c_a_bar   <- mean(c_a)
-  c_g_bar   <- mean(c_g)
   
   beta      <- beta_fct(c_a, c_a_bar, c_g, geomMu)
   
-  price <- mean(c_a - beta * (c_g - c_g_bar))
-  se    <- sd(c_a - beta * (c_g - c_g_bar)) / sqrt(n)
+  price <- mean(c_a - beta * (c_g - geomMu))
+  se    <- sd(c_a - beta * (c_g - geomMu)) / sqrt(n)
   time  <- proc.time() - ptm
   
   return(list(price = price, se = se, time = time))
@@ -212,7 +208,7 @@ asianIS <- function(s, k, r, v, dt, ts, mat, n){
   
   mu <- findShift(r, v, k, ts, dt)
   
-  z <- asianRandomIS(n, v, k, mu, ts, dt)
+  z <- asianRandomIS(n, mu, ts)
   
   stock     <- asianStock(r, v, dt, z)
   arithMean <- rowMeans(stock)
@@ -287,7 +283,7 @@ asianCV( s, 110, 0.05, 0.2, dt, ts, mat, n)
 m <- 10
 l <- n / m
 q <- m / n
-p <- 1 / l
+p <- m / n
 
 # General matrix initialistion
 cmcP <- avP <- cvP <- ssP <- isP <- emptyMatrix(strike, sigma)
