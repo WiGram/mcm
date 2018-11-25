@@ -175,15 +175,15 @@ for (i in 1:len){
   # ===== IS + SS ============================= #
   # =========================================== #
   
-  ls_isss <- mean_k[opt] + vol * z_ss
-  c_isss  <- dc * pmax(exp(ls_isss) - k, 0)
-  
-  f <- dnorm(ls_isss, mean = mean_k[index], sd = vol)
-  g <- dnorm(ls_isss, mean = mean_k[opt],   sd = vol)
-  w <- f / g
-  
-  price_isss[i] <- sum(p * c_isss * w)
-  sd_isss[i]    <- sd(c_isss * w) / sqrt(n)
+  # ls_isss <- mean_k[opt] + vol * z_ss
+  # c_isss  <- dc * pmax(exp(ls_isss) - k, 0)
+  # 
+  # f <- dnorm(ls_isss, mean = mean_k[index], sd = vol)
+  # g <- dnorm(ls_isss, mean = mean_k[opt],   sd = vol)
+  # w <- f / g
+  # 
+  # price_isss[i] <- sum(p * c_isss * w)
+  # sd_isss[i]    <- sd(c_isss * w) / sqrt(n)
 
   # ============================================= #
   # ===== Antithetic Variates =================== #

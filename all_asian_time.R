@@ -155,7 +155,7 @@ asianCMC <- function(s, k, r, v, dt, ts, mat, n){
   se    <- sd(c) / sqrt(n)
   time  <- proc.time() - ptm
   
-  return(list(price = price, se = se, time = time))
+  return(list(price = price, se = se, time = time[[3]]))
 }
 
 # --------------------------------------------- #
@@ -174,7 +174,7 @@ asianAV <- function(s, k, r, v, dt, ts, mat, n){
   se    <- sd(c) / sqrt(n)
   time  <- proc.time() - ptm
   
-  return(list(price = price, se = se, time = time))
+  return(list(price = price, se = se, time = time[[3]]))
 }
 
 # --------------------------------------------- #
@@ -191,15 +191,14 @@ asianCV <- function(s, k, r, v, dt, ts, mat, n){
   
   c_a       <- exp(-r * mat) * pmax(arithMean - k, 0)
   c_g       <- exp(-r * mat) * pmax(geomMean - k,  0)
-  c_a_bar   <- mean(c_a)
   
-  beta      <- beta_fct(c_a, c_a_bar, c_g, geomMu)
+  beta      <- beta_fct(c_a, mean(c_a), c_g, geomMu)
   
   price <- mean(c_a - beta * (c_g - geomMu))
   se    <- sd(c_a - beta * (c_g - geomMu)) / sqrt(n)
   time  <- proc.time() - ptm
   
-  return(list(price = price, se = se, time = time))
+  return(list(price = price, se = se, time = time[[3]]))
 }
 
 # --------------------------------------------- #
@@ -221,7 +220,7 @@ asianIS <- function(s, k, r, v, dt, ts, mat, n){
   se    <- sd(c) / sqrt(n)
   time  <- proc.time() - ptm
   
-  return(list(price = price, se = se, time = time))
+  return(list(price = price, se = se, time = time[[3]]))
 }
 
 # --------------------------------------------- #
@@ -255,7 +254,7 @@ asianSS <- function(s, k, r, v, dt, ts, mat, n, m, p){
   se    <- sqrt(var_ss) / sqrt(n)
   time  <- proc.time() - ptm
   
-  return(list(price = price, se = se, time = time))
+  return(list(price = price, se = se, time = time[[3]]))
 }
 # ============================================= #
 
@@ -268,16 +267,12 @@ s      <- 100
 mat    <- 1
 ts     <- 500
 dt     <- mat / ts
-strike <- 110
-rate   <- 0.05
-sigma  <- 0.30
-# strike <- seq(80, 120, 10)
-# rate   <- seq(0.03,0.07,0.02)
-# sigma  <- seq(0.2,0.40,0.1)
-
-asianCMC(s, 110, 0.05, 0.2, dt, ts, mat, n)
-asianAV( s, 110, 0.05, 0.2, dt, ts, mat, n)
-asianCV( s, 110, 0.05, 0.2, dt, ts, mat, n)
+# strike <- 110
+# rate   <- 0.05
+# sigma  <- 0.30
+strike <- seq(90, 110, 10)
+rate   <- seq(0.03,0.05,0.02)
+sigma  <- seq(0.2,0.30,0.1)
 
 # bridge parameters
 m <- 10
@@ -285,120 +280,37 @@ l <- n / m
 q <- m / n
 p <- m / n
 
-# General matrix initialistion
-cmcP <- avP <- cvP <- ssP <- isP <- emptyMatrix(strike, sigma)
-cmcS <- avS <- cvS <- ssS <- isS <- emptyMatrix(strike, sigma)
-cmcT <- avT <- cvT <- ssT <- isT <- emptyMatrix(strike, sigma)
-
-cmcPs <- avPs <- cvPs <- ssPs <- isPs <- list()
-cmcSs <- avSs <- cvSs <- ssSs <- isSs <- list()
-cmcTs <- avTs <- cvTs <- ssTs <- isTs <- list()
-
-h <- 1
-i <- 1
+asian <- list()
 
 for (r in rate){
-  for (v in sigma){
-    for (k in strike){
-      
-      cmc <- asianCMC(s, k, r, v, dt, ts, mat, n)
-      av  <- asianAV( s, k, r, v, dt, ts, mat, n)
-      cv  <- asianCV( s, k, r, v, dt, ts, mat, n)
-      is  <- asianIS( s, k, r, v, dt, ts, mat, n)
-      ss  <- asianSS( s, k, r, v, dt, ts, mat, n, m, p)
-      
-      cmcP[h, i] <- cmc$price
-      cmcS[h, i] <- cmc$se
-      cmcT[h, i] <- cmc$time[[3]]
-      
-      avP[h, i] <- av$price
-      avS[h, i] <- av$se
-      avT[h, i] <- av$time[[3]]
-      
-      cvP[h, i] <- cv$price
-      cvS[h, i] <- cv$se
-      cvT[h, i] <- cv$time[[3]]
-      
-      isP[h, i] <- is$price
-      isS[h, i] <- is$se
-      isT[h, i] <- is$time[[3]]
-      
-      ssP[h, i] <- ss$price
-      ssS[h, i] <- ss$se
-      ssT[h, i] <- ss$time[[3]]
-
-      h <- h + 1
-    }
-    h <- 1
-    i <- i + 1
-  }
-  h <- 1
-  i <- 1
-  
   a <- paste0('r: ', r)
-  cmcPs[[a]] <- cmcP
-  rownames(cmcPs[[a]]) <- paste0('k: ', strike)
-  colnames(cmcPs[[a]]) <- paste0('v: ', sigma)
-  
-  cmcSs[[a]] <- cmcS
-  rownames(cmcSs[[a]]) <- paste0('k: ', strike)
-  colnames(cmcSs[[a]]) <- paste0('v: ', sigma)
-  
-  cmcTs[[a]] <- cmcT
-  rownames(cmcTs[[a]]) <- paste0('k: ', strike)
-  colnames(cmcTs[[a]]) <- paste0('v: ', sigma)
-  
-  avPs[[a]] <- avP
-  rownames(avPs[[a]]) <- paste0('k: ', strike)
-  colnames(avPs[[a]]) <- paste0('v: ', sigma)
-  
-  avSs[[a]] <- avS
-  rownames(avSs[[a]]) <- paste0('k: ', strike)
-  colnames(avSs[[a]]) <- paste0('v: ', sigma)
-  
-  avTs[[a]] <- avT
-  rownames(avTs[[a]]) <- paste0('k: ', strike)
-  colnames(avTs[[a]]) <- paste0('v: ', sigma)
-  
-  cvPs[[a]] <- cvP
-  rownames(cvPs[[a]]) <- paste0('k: ', strike)
-  colnames(cvPs[[a]]) <- paste0('v: ', sigma)
-  
-  cvSs[[a]] <- cvS
-  rownames(cvSs[[a]]) <- paste0('k: ', strike)
-  colnames(cvSs[[a]]) <- paste0('v: ', sigma)
-  
-  cvTs[[a]] <- cvT
-  rownames(cvTs[[a]]) <- paste0('k: ', strike)
-  colnames(cvTs[[a]]) <- paste0('v: ', sigma)
-  
-  isPs[[a]] <- isP
-  rownames(isPs[[a]]) <- paste0('k: ', strike)
-  colnames(isPs[[a]]) <- paste0('v: ', sigma)
-  
-  isSs[[a]] <- isS
-  rownames(isSs[[a]]) <- paste0('k: ', strike)
-  colnames(isSs[[a]]) <- paste0('v: ', sigma)
-  
-  isTs[[a]] <- isT
-  rownames(isTs[[a]]) <- paste0('k: ', strike)
-  colnames(isTs[[a]]) <- paste0('v: ', sigma)
-  
-  ssPs[[a]] <- ssP
-  rownames(ssPs[[a]]) <- paste0('k: ', strike)
-  colnames(ssPs[[a]]) <- paste0('v: ', sigma)
-  
-  ssSs[[a]] <- ssS
-  rownames(ssSs[[a]]) <- paste0('k: ', strike)
-  colnames(ssSs[[a]]) <- paste0('v: ', sigma)
-  
-  ssTs[[a]] <- ssT
-  rownames(ssTs[[a]]) <- paste0('k: ', strike)
-  colnames(ssTs[[a]]) <- paste0('v: ', sigma)
-}
+  for (v in sigma){
+    b <- paste0('v: ', v)
+    for (k in strike){
+      c <- paste0('k: ', k)
+      
+      asian[["cmc"]][[a]][[b]][[c]] <- asianCMC(s, k, r, v, dt, ts, mat, n)
+      asian[["av"]][[a]][[b]][[c]]  <- asianAV( s, k, r, v, dt, ts, mat, n)
+      asian[["cv"]][[a]][[b]][[c]]  <- asianCV( s, k, r, v, dt, ts, mat, n)
+      asian[["is"]][[a]][[b]][[c]]  <- asianIS( s, k, r, v, dt, ts, mat, n)
+      asian[["ss"]][[a]][[b]][[c]]  <- asianSS( s, k, r, v, dt, ts, mat, n, m, p)
 
-cmcPs$`r: 0.05`
-avPs$`r: 0.05`
-cvPs$`r: 0.05`
-isPs$`r: 0.05`
-ssPs$`r: 0.05`
+    }
+    asian[["cmc"]][[a]][[b]][[c]] <- do.call(rbind, asian[["cmc"]][[a]][[b]][[c]])
+    asian[["av"]][[a]][[b]][[c]] <- do.call(rbind, asian[["av"]][[a]][[b]][[c]])
+    asian[["cv"]][[a]][[b]][[c]] <- do.call(rbind, asian[["cv"]][[a]][[b]][[c]])
+    asian[["is"]][[a]][[b]][[c]] <- do.call(rbind, asian[["is"]][[a]][[b]][[c]])
+    asian[["ss"]][[a]][[b]][[c]] <- do.call(rbind, asian[["ss"]][[a]][[b]][[c]])
+  }
+  asian[["cmc"]][[a]][[b]] <- do.call(cbind, asian[["cmc"]][[a]][[b]])
+  asian[["av"]][[a]][[b]] <- do.call(cbind, asian[["av"]][[a]][[b]])
+  asian[["cv"]][[a]][[b]] <- do.call(cbind, asian[["cv"]][[a]][[b]])
+  asian[["is"]][[a]][[b]] <- do.call(cbind, asian[["is"]][[a]][[b]])
+  asian[["ss"]][[a]][[b]] <- do.call(cbind, asian[["ss"]][[a]][[b]])
+}
+# 
+# cmcPs$`r: 0.05`
+# avPs$`r: 0.05`
+# cvPs$`r: 0.05`
+# isPs$`r: 0.05`
+# ssPs$`r: 0.05`
