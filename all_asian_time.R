@@ -11,8 +11,20 @@ set.seed(12345)
 # ============================================= #
 
 # ----- Functions ----------------------------- #
+euroBS <- function(s, k, r, v, mat){
+  dc <- exp(-r * mat)
+  mean <- log(s) + (r - 0.5 * v ** 2) * mat
+  vol  <- v * sqrt(mat)
+  
+  d2 <- (mean - log(k)) / vol
+  d1 <- d2 + vol
+  n2 <- pnorm(d2)
+  n1 <- pnorm(d1)
+  return(s * n1 - dc * k * n2)
+}
+
 # Kemma and Vorst
-c_g_bar_fct <- function(s, k, r, v, mat){
+geomMuFct <- function(s, k, r, v, mat){
   d_star <- 0.5 * (r - v ** 2 / 6) * mat
   d1     <- (log(s / k) + 0.5 * (r + v ** 2 / 6) * mat) / (v * sqrt(mat / 3))
   d2     <- d1 - v * sqrt(mat / 3)
@@ -20,9 +32,9 @@ c_g_bar_fct <- function(s, k, r, v, mat){
 }
 
 # CV beta
-beta_fct <- function(c_1, c_1_bar, c_2, c_2_bar){
-  sum((c_1 - c_1_bar) * (c_2 - c_2_bar)) /
-    sum((c_2 - c_2_bar) ** 2)
+betaFct <- function(c, cMean, control, controlMu){
+  sum((c - cMean) * (control - controlMu)) /
+    sum((control - controlMu) ** 2)
 }
 
 # Brownian bridge
@@ -183,19 +195,96 @@ asianCV <- function(s, k, r, v, dt, ts, mat, n){
   
   z     <- asianRandomNumbers(n, ts)
   
-  stock <- asianStock(r, v, dt, z)
+  stock     <- asianStock(r, v, dt, z)
   arithMean <- rowMeans(stock)
   
   geomMean  <- exp(rowMeans(log(stock)))
-  geomMu    <- c_g_bar_fct(s, k, r, v, mat)
+  geomMu    <- geomMuFct(s, k, r, v, mat)
   
-  c_a       <- exp(-r * mat) * pmax(arithMean - k, 0)
-  c_g       <- exp(-r * mat) * pmax(geomMean - k,  0)
+  cArith    <- exp(-r * mat) * pmax(arithMean - k, 0)
+  cGeom     <- exp(-r * mat) * pmax(geomMean - k,  0)
   
-  beta      <- beta_fct(c_a, mean(c_a), c_g, geomMu)
+  beta      <- betaFct(cArith, mean(cArith), cGeom, geomMu)
   
-  price <- mean(c_a - beta * (c_g - geomMu))
-  se    <- sd(c_a - beta * (c_g - geomMu)) / sqrt(n)
+  price <- mean(cArith - beta * (cGeom - geomMu))
+  se    <- sd(cArith - beta * (cGeom - geomMu)) / sqrt(n)
+  time  <- proc.time() - ptm
+  
+  return(list(price = price, se = se, time = time[[3]]))
+}
+
+# --------------------------------------------- #
+asianTwoCV <- function(s, k, r, v, dt, ts, mat, n, CV = 'stock'){
+  ptm <- proc.time()
+  
+  z     <- asianRandomNumbers(n, ts)
+  
+  stock     <- asianStock(r, v, dt, z)
+  sT        <- stock[, ts]
+  
+  arithMean <- rowMeans(stock)
+  cArith    <- exp(-r * mat) * pmax(arithMean - k, 0)
+  
+  geomMean  <- exp(rowMeans(log(stock)))  
+  cGeom     <- exp(-r * mat) * pmax(geomMean - k,  0)
+  geomMu    <- geomMuFct(s, k, r, v, mat)
+  
+  Y  <- cArith
+  if (CV == 'stock'){
+    stockMu   <- exp(r * mat) * s
+    X  <- cbind(1, cGeom, sT)
+    
+    beta <- solve(t(X) %*% X) %*% (t(X) %*% Y)
+    betaGeom <- beta[2] * (cGeom - geomMu)
+    betaTwo  <- beta[3] * (sT - stockMu)
+  } else {
+    euro      <- exp(- r * mat) * pmax(sT - k, 0)
+    euroMu    <- euroBS(s, k, r, v, mat)
+    
+    X  <- cbind(1, cGeom, euro)
+    
+    beta <- solve(t(X) %*% X) %*% (t(X) %*% Y)
+    betaGeom <- beta[2] * (cGeom - geomMu)
+    betaTwo  <- beta[3] * (euro - euroMu)
+  }
+  
+  price <- mean(cArith - betaGeom - betaTwo)
+  se    <- sd(cArith - betaGeom - betaTwo) / sqrt(n)
+  time  <- proc.time() - ptm
+  
+  return(list(price = price, se = se, time = time[[3]]))
+}
+
+# --------------------------------------------- #
+asianThreeCV <- function(s, k, r, v, dt, ts, mat, n){
+  ptm <- proc.time()
+  
+  z     <- asianRandomNumbers(n, ts)
+  
+  stock     <- asianStock(r, v, dt, z)                # Control 1
+  stockMu   <- exp(r * mat) * s                       # Mu 1
+  
+  arithMean <- rowMeans(stock)
+  cArith    <- exp(-r * mat) * pmax(arithMean - k, 0) # To estimate
+  
+  sT        <- stock[, ts]
+  euro      <- exp(- r * mat) * pmax(sT - k, 0)       # control 2
+  euroMu    <- euroBS(s, k, r, v, mat)                # Mu 2
+
+  geomMean  <- exp(rowMeans(log(stock)))  
+  cGeom     <- exp(-r * mat) * pmax(geomMean - k,  0) # control 3
+  geomMu    <- geomMuFct(s, k, r, v, mat)             # Mu 3
+  
+  Y  <- cArith
+  X  <- cbind(1, cGeom, sT, euro)
+  
+  beta <- solve(t(X) %*% X) %*% (t(X) %*% Y)
+  betaGeom  <- beta[2] * (cGeom - geomMu)
+  betaStock <- beta[3] * (sT - stockMu)
+  betaEuro  <- beta[4] * (euro - euroMu)
+  
+  price <- mean(cArith - betaGeom - betaStock - betaEuro)
+  se    <- sd(cArith - betaGeom - betaStock - betaEuro) / sqrt(n)
   time  <- proc.time() - ptm
   
   return(list(price = price, se = se, time = time[[3]]))
@@ -292,6 +381,9 @@ for (r in rate){
       asian[["cmc"]][[a]][[b]][[c]] <- asianCMC(s, k, r, v, dt, ts, mat, n)
       asian[["av"]][[a]][[b]][[c]]  <- asianAV( s, k, r, v, dt, ts, mat, n)
       asian[["cv"]][[a]][[b]][[c]]  <- asianCV( s, k, r, v, dt, ts, mat, n)
+      asian[['cvS']][[a]][[b]][[c]] <- asianTwoCV( s, k, r, v, dt, ts, mat, n, CV = 'stock')
+      asian[['cvE']][[a]][[b]][[c]] <- asianTwoCV( s, k, r, v, dt, ts, mat, n, CV = 'euro')
+      asian[['cv3']][[a]][[b]][[c]] <- asianThreeCV( s, k, r, v, dt, ts, mat, n)
       asian[["is"]][[a]][[b]][[c]]  <- asianIS( s, k, r, v, dt, ts, mat, n)
       asian[["ss"]][[a]][[b]][[c]]  <- asianSS( s, k, r, v, dt, ts, mat, n, m, p)
 
@@ -299,12 +391,18 @@ for (r in rate){
     asian[["cmc"]][[a]][[b]][[c]] <- do.call(rbind, asian[["cmc"]][[a]][[b]][[c]])
     asian[["av"]][[a]][[b]][[c]] <- do.call(rbind, asian[["av"]][[a]][[b]][[c]])
     asian[["cv"]][[a]][[b]][[c]] <- do.call(rbind, asian[["cv"]][[a]][[b]][[c]])
+    asian[['cvS']][[a]][[b]][[c]] <- do.call(rbind, asian[['cvS']][[a]][[b]][[c]])
+    asian[['cvE']][[a]][[b]][[c]] <- do.call(rbind, asian[['cvE']][[a]][[b]][[c]])
+    asian[['cv3']][[a]][[b]][[c]] <- do.call(rbind, asian[['cv3']][[a]][[b]][[c]])
     asian[["is"]][[a]][[b]][[c]] <- do.call(rbind, asian[["is"]][[a]][[b]][[c]])
     asian[["ss"]][[a]][[b]][[c]] <- do.call(rbind, asian[["ss"]][[a]][[b]][[c]])
   }
   asian[["cmc"]][[a]][[b]] <- do.call(cbind, asian[["cmc"]][[a]][[b]])
   asian[["av"]][[a]][[b]] <- do.call(cbind, asian[["av"]][[a]][[b]])
   asian[["cv"]][[a]][[b]] <- do.call(cbind, asian[["cv"]][[a]][[b]])
+  asian[["cvS"]][[a]][[b]] <- do.call(cbind, asian[["cvS"]][[a]][[b]])
+  asian[["cvE"]][[a]][[b]] <- do.call(cbind, asian[["cvE"]][[a]][[b]])
+  asian[["cv3"]][[a]][[b]] <- do.call(cbind, asian[["cv3"]][[a]][[b]])
   asian[["is"]][[a]][[b]] <- do.call(cbind, asian[["is"]][[a]][[b]])
   asian[["ss"]][[a]][[b]] <- do.call(cbind, asian[["ss"]][[a]][[b]])
 }
