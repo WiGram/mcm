@@ -84,6 +84,10 @@ analytical2 <- exp(-r * mat) * (exp(mu + 0.5 * sig ** 2) * pnorm(d1) - k * pnorm
 # ============================================= #
 
 # Here we try to immitate Glasserman
+ggplot(NULL) + 
+  geom_point(aes(x = S[, ts], y = c_e),
+             alpha = 0.3, fill = NA, shape = 'o') +
+  labs(x = 'Stock price', y = 'European call option')
 
 ggplot(NULL) +
   geom_point(aes(x = S[,ts], y = c_a),
