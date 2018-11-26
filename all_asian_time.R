@@ -1,10 +1,8 @@
-dev.off()             
-rm(list = ls())       
-cat("\014")           
-options(scipen = 999) 
-library(stats4)       
-library(ggplot2)      
-set.seed(12345)
+dev.off()                # delete plots    
+rm(list = ls())          # delete variables
+cat("\014")              # clear console
+options(scipen = 999)    # disable scientific notation
+options(digits.secs = 6) # 6 decimals for Sys.time()
 
 # ============================================= #
 # ===== Asian options ========================= #
@@ -151,7 +149,7 @@ asianRandomISSS <- function(n, m, ts, mat, u, c){
 
 # --------------------------------------------- #
 asianCMC <- function(s, k, r, v, dt, ts, mat, n){
-  ptm <- proc.time()
+  ptm <- Sys.time()
   
   z <- asianRandomNumbers(n, ts)
   
@@ -162,15 +160,15 @@ asianCMC <- function(s, k, r, v, dt, ts, mat, n){
   
   price <- mean(c)
   se    <- sd(c) / sqrt(n)
-  time  <- proc.time() - ptm
-  seTime <- se * time[[3]]
+  time  <- as.numeric(Sys.time() - ptm)
+  seTime <- se * time
   
-  return(list(price = price, se = se, time = time[[3]], seTime = seTime))
+  return(list(price = price, se = se, time = time, seTime = seTime))
 }
 
 # --------------------------------------------- #
 asianAV <- function(s, k, r, v, dt, ts, mat, n){
-  ptm <- proc.time()
+  ptm <- Sys.time()
   
   z <- asianRandomAV(n / 2, ts)
   
@@ -182,15 +180,15 @@ asianAV <- function(s, k, r, v, dt, ts, mat, n){
   
   price <- mean(c)
   se    <- sd(c) / sqrt(n)
-  time  <- proc.time() - ptm
-  seTime <- se * time[[3]]
+  time  <- as.numeric(Sys.time() - ptm)
+  seTime <- se * time
   
-  return(list(price = price, se = se, time = time[[3]], seTime = seTime))
+  return(list(price = price, se = se, time = time, seTime = seTime))
 }
 
 # --------------------------------------------- #
 asianCV <- function(s, k, r, v, dt, ts, mat, n){
-  ptm <- proc.time()
+  ptm <- Sys.time()
   
   z     <- asianRandomNumbers(n, ts)
   
@@ -207,15 +205,15 @@ asianCV <- function(s, k, r, v, dt, ts, mat, n){
   
   price <- mean(cArith - beta * (cGeom - geomMu))
   se    <- sd(cArith - beta * (cGeom - geomMu)) / sqrt(n)
-  time  <- proc.time() - ptm
-  seTime <- se * time[[3]]
+  time  <- as.numeric(Sys.time() - ptm)
+  seTime <- se * time
   
-  return(list(price = price, se = se, time = time[[3]], seTime = seTime))
+  return(list(price = price, se = se, time = time, seTime = seTime))
 }
 
 # --------------------------------------------- #
 asianTwoCV <- function(s, k, r, v, dt, ts, mat, n, CV = 'stock'){
-  ptm <- proc.time()
+  ptm <- Sys.time()
   
   z     <- asianRandomNumbers(n, ts)
   
@@ -250,17 +248,17 @@ asianTwoCV <- function(s, k, r, v, dt, ts, mat, n, CV = 'stock'){
   
   price <- mean(cArith - betaGeom - betaTwo)
   se    <- sd(cArith - betaGeom - betaTwo) / sqrt(n)
-  time  <- proc.time() - ptm
-  seTime <- se * time[[3]]
+  time  <- as.numeric(Sys.time() - ptm)
+  seTime <- se * time
   
-  return(list(price = price, se = se, time = time[[3]], seTime = seTime))
+  return(list(price = price, se = se, time = time, seTime = seTime))
 }
 
 # --------------------------------------------- #
 asianThreeCV <- function(s, k, r, v, dt, ts, mat, n){
-  ptm <- proc.time()
+  ptm <- Sys.time()
   
-  z     <- asianRandomNumbers(n, ts)
+  z         <- asianRandomNumbers(n, ts)
   
   stock     <- asianStock(r, v, dt, z)                # Control 1
   stockMu   <- exp(r * mat) * s                       # Mu 1
@@ -286,15 +284,15 @@ asianThreeCV <- function(s, k, r, v, dt, ts, mat, n){
   
   price  <- mean(cArith - betaGeom - betaStock - betaEuro)
   se     <- sd(cArith - betaGeom - betaStock - betaEuro) / sqrt(n)
-  time   <- proc.time() - ptm
-  seTime <- se * time[[3]]
+  time  <- as.numeric(Sys.time() - ptm)
+  seTime <- se * time
   
-  return(list(price = price, se = se, time = time[[3]], seTime = seTime))
+  return(list(price = price, se = se, time = time, seTime = seTime))
 }
 
 # --------------------------------------------- #
 asianIS <- function(s, k, r, v, dt, ts, mat, n){
-  ptm <- proc.time()
+  ptm <- Sys.time()
   
   mu <- findShift(r, v, k, ts, dt)
   
@@ -309,10 +307,10 @@ asianIS <- function(s, k, r, v, dt, ts, mat, n){
   
   price <- mean(c)
   se    <- sd(c) / sqrt(n)
-  time  <- proc.time() - ptm
-  seTime <- se * time[[3]]
+  time  <- as.numeric(Sys.time() - ptm)
+  seTime <- se * time
   
-  return(list(price = price, se = se, time = time[[3]], seTime = seTime))
+  return(list(price = price, se = se, time = time, seTime = seTime))
 }
 
 # --------------------------------------------- #
@@ -320,7 +318,7 @@ asianSS <- function(s, k, r, v, dt, ts, mat, n, m, p){
   l <- n / m
   q <- m / n
   
-  ptm <- proc.time()
+  ptm <- Sys.time()
   
   z <- asianRandomSS(n, m, ts, mat)
   
@@ -344,10 +342,10 @@ asianSS <- function(s, k, r, v, dt, ts, mat, n, m, p){
   
   price <- sum(p * colMeans(c))
   se    <- sqrt(var_ss) / sqrt(n)
-  time  <- proc.time() - ptm
-  seTime <- se * time[[3]]
+  time  <- as.numeric(Sys.time() - ptm)
+  seTime <- se * time
   
-  return(list(price = price, se = se, time = time[[3]], seTime = seTime))
+  return(list(price = price, se = se, time = time, seTime = seTime))
 }
 
 # --------------------------------------------- #
@@ -355,7 +353,7 @@ asianISSS <- function(s, k, r, v, dt, ts, mat, n, m, p){
   l <- n / m
   q <- m / n
   
-  ptm <- proc.time()
+  ptm <- Sys.time()
   
   mu <- findShift(r, v, k, ts, dt)
   u  <- mu / sqrt(c(mu %*% mu))
@@ -377,10 +375,10 @@ asianISSS <- function(s, k, r, v, dt, ts, mat, n, m, p){
   
   price <- sum(p * colMeans(c))
   se    <- sqrt(var_ss) / sqrt(n)
-  time  <- proc.time() - ptm
-  seTime <- se * time[[3]]
+  time  <- as.numeric(Sys.time() - ptm)
+  seTime <- se * time
   
-  return(list(price = price, se = se, time = time[[3]], seTime = seTime))
+  return(list(price = price, se = se, time = time, seTime = seTime))
 }
 # ============================================= #
 

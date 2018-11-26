@@ -1,11 +1,8 @@
-# Importance sampling examples
-dev.off()             # delete plots
-rm(list = ls())       # delete variables
-cat("\014")           # clear console
-options(scipen = 999) # disable scientific notation
-library(stats4)       # base package; use for mle()
-# install.packages("ggplot2") # if not already installed
-library(ggplot2)      # Graphing package (sweet)
+dev.off()                # delete plots
+rm(list = ls())          # delete variables
+cat("\014")              # clear console
+options(scipen = 999)    # disable scientific notation
+options(digits.secs = 6) # 6 decimals for Sys.time()
 
 # ============================================= #
 # ===== Assisting functions =================== #
@@ -14,6 +11,7 @@ library(ggplot2)      # Graphing package (sweet)
 # --------------------------------------------- #
 # Random numbers
 euroRandomNumber <- function(n, seed = 12345){
+  set.seed(seed)
   return(rnorm(n = n, mean = 0, sd = 1))
 }
 
@@ -97,7 +95,7 @@ euroBS <- function(s, k, r, v, mat){
 }
 
 euroCMC <- function(s, k, r, v, mat, ts, n){
-  ptm <- proc.time()
+  ptm <- Sys.time()
   
   z     <- euroRandomNumber(n)
   stock <- euroStock(s, r, v, mat, z)
@@ -105,14 +103,14 @@ euroCMC <- function(s, k, r, v, mat, ts, n){
   
   price <- mean(c)
   se    <- sd(c) / sqrt(n)
-  time  <- proc.time() - ptm
-  seTime <- se * time[[3]]
+  time  <- as.numeric(Sys.time() - ptm)
+  seTime <- se * time
   
-  return(list(price = price, se = se, time = time[[3]], seTime = seTime))
+  return(list(price = price, se = se, time = time, seTime = seTime))
 }
 
 euroAV <- function(s, k, r, v, mat, ts, n){
-  ptm <- proc.time()
+  ptm <- Sys.time()
   
   z     <- euroRandomAV(n / 2)
   stock <- euroStock(s, r, v, mat, z)
@@ -121,14 +119,14 @@ euroAV <- function(s, k, r, v, mat, ts, n){
   
   price <- mean(c)
   se    <- sd(c) / sqrt(n)
-  time  <- proc.time() - ptm
-  seTime <- se * time[[3]]
+  time  <- as.numeric(Sys.time() - ptm)
+  seTime <- se * time
   
-  return(list(price = price, se = se, time = time[[3]], seTime = seTime))
+  return(list(price = price, se = se, time = time, seTime = seTime))
 }
 
 euroCV <- function(s, k, r, v, mat, ts, n){
-  ptm <- proc.time()
+  ptm <- Sys.time()
   
   z     <- euroRandomNumber(n)
   stock <- euroStock(s, r, v, mat, z)
@@ -140,16 +138,16 @@ euroCV <- function(s, k, r, v, mat, ts, n){
   
   price <- mean(c - beta * (stock - muS))
   se    <- sd(c - beta * (stock - muS)) / sqrt(n)
-  time  <- proc.time() - ptm
-  seTime <- se * time[[3]]
+  time  <- as.numeric(Sys.time() - ptm)
+  seTime <- se * time
   
-  return(list(price = price, se = se, time = time[[3]], seTime = seTime))
+  return(list(price = price, se = se, time = time, seTime = seTime))
 }
 
 euroIS <- function(s, k, r, v, mat, ts, n){
   dt  <- mat / ts
   
-  ptm <- proc.time()
+  ptm <- Sys.time()
   
   mu  <- findShift(r, v, k, ts, dt)
   z   <- euroRandomNumber(n) + mu
@@ -160,10 +158,10 @@ euroIS <- function(s, k, r, v, mat, ts, n){
   
   price <- mean(c)
   se    <- sd(c) / sqrt(n)
-  time  <- proc.time() - ptm
-  seTime <- se * time[[3]]
+  time  <- as.numeric(Sys.time() - ptm)
+  seTime <- se * time
   
-  return(list(price = price, se = se, time = time[[3]], seTime = seTime))
+  return(list(price = price, se = se, time = time, seTime = seTime))
 }
 
 euroSS <- function(s, k, r, v, mat, ts, n, m){
@@ -171,7 +169,7 @@ euroSS <- function(s, k, r, v, mat, ts, n, m){
   p  <- 1 / l
   q  <- m / n
   
-  ptm <- proc.time()
+  ptm <- Sys.time()
   
   z <- euroRandomSS(m, l)
   
@@ -180,10 +178,10 @@ euroSS <- function(s, k, r, v, mat, ts, n, m){
   
   price <- sum(p * colMeans(c))
   se    <- sdSS(c, l, p, q) / sqrt(n)
-  time  <- proc.time() - ptm
-  seTime <- se * time[[3]]
+  time  <- as.numeric(Sys.time() - ptm)
+  seTime <- se * time
   
-  return(list(price = price, se = se, time = time[[3]], seTime = seTime))
+  return(list(price = price, se = se, time = time, seTime = seTime))
 }
 
 euroISSS <- function(s, k, r, v, mat, ts, n, m){
@@ -191,9 +189,10 @@ euroISSS <- function(s, k, r, v, mat, ts, n, m){
   p <- 1 / l
   q <- m / n
   
-  ptm <- proc.time()
+  # script beginning
+  ptm <- Sys.time()
 
-  mu  <- findShift(r, v, k, ts, dt)
+  mu    <- findShift(r, v, k, ts, dt)
   
   z     <- euroRandomSS(m, l) + mu
   
@@ -203,10 +202,10 @@ euroISSS <- function(s, k, r, v, mat, ts, n, m){
   
   price  <- sum(p * colMeans(c))
   se     <- sdSS(c, l, p, q) / sqrt(n)
-  time   <- proc.time() - ptm
-  seTime <- se * time[[3]]
+  time  <- as.numeric(Sys.time() - ptm)
+  seTime <- se * time
   
-  return(list(price = price, se = se, time = time[[3]], seTime = seTime))
+  return(list(price = price, se = se, time = time, seTime = seTime))
 }
 
 # ============================================= #
@@ -214,7 +213,6 @@ euroISSS <- function(s, k, r, v, mat, ts, n, m){
 # ============================================= #
 
 # We want to first simulate the log of the stock
-set.seed(12345)
 n <- 100000
 s <- 100
 k <- 110
