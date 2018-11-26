@@ -163,7 +163,7 @@ asianCMC <- function(s, k, r, v, dt, ts, mat, n){
   price <- mean(c)
   se    <- sd(c) / sqrt(n)
   time  <- proc.time() - ptm
-  seTime <- se * time
+  seTime <- se * time[[3]]
   
   return(list(price = price, se = se, time = time[[3]], seTime = seTime))
 }
@@ -183,7 +183,7 @@ asianAV <- function(s, k, r, v, dt, ts, mat, n){
   price <- mean(c)
   se    <- sd(c) / sqrt(n)
   time  <- proc.time() - ptm
-  seTime <- se * time
+  seTime <- se * time[[3]]
   
   return(list(price = price, se = se, time = time[[3]], seTime = seTime))
 }
@@ -208,7 +208,7 @@ asianCV <- function(s, k, r, v, dt, ts, mat, n){
   price <- mean(cArith - beta * (cGeom - geomMu))
   se    <- sd(cArith - beta * (cGeom - geomMu)) / sqrt(n)
   time  <- proc.time() - ptm
-  seTime <- se * time
+  seTime <- se * time[[3]]
   
   return(list(price = price, se = se, time = time[[3]], seTime = seTime))
 }
@@ -251,7 +251,7 @@ asianTwoCV <- function(s, k, r, v, dt, ts, mat, n, CV = 'stock'){
   price <- mean(cArith - betaGeom - betaTwo)
   se    <- sd(cArith - betaGeom - betaTwo) / sqrt(n)
   time  <- proc.time() - ptm
-  seTime <- se * time
+  seTime <- se * time[[3]]
   
   return(list(price = price, se = se, time = time[[3]], seTime = seTime))
 }
@@ -287,7 +287,7 @@ asianThreeCV <- function(s, k, r, v, dt, ts, mat, n){
   price  <- mean(cArith - betaGeom - betaStock - betaEuro)
   se     <- sd(cArith - betaGeom - betaStock - betaEuro) / sqrt(n)
   time   <- proc.time() - ptm
-  seTime <- se * time
+  seTime <- se * time[[3]]
   
   return(list(price = price, se = se, time = time[[3]], seTime = seTime))
 }
@@ -310,7 +310,7 @@ asianIS <- function(s, k, r, v, dt, ts, mat, n){
   price <- mean(c)
   se    <- sd(c) / sqrt(n)
   time  <- proc.time() - ptm
-  seTime <- se * time
+  seTime <- se * time[[3]]
   
   return(list(price = price, se = se, time = time[[3]], seTime = seTime))
 }
@@ -345,7 +345,7 @@ asianSS <- function(s, k, r, v, dt, ts, mat, n, m, p){
   price <- sum(p * colMeans(c))
   se    <- sqrt(var_ss) / sqrt(n)
   time  <- proc.time() - ptm
-  seTime <- se * time
+  seTime <- se * time[[3]]
   
   return(list(price = price, se = se, time = time[[3]], seTime = seTime))
 }
@@ -378,7 +378,7 @@ asianISSS <- function(s, k, r, v, dt, ts, mat, n, m, p){
   price <- sum(p * colMeans(c))
   se    <- sqrt(var_ss) / sqrt(n)
   time  <- proc.time() - ptm
-  seTime <- se * time
+  seTime <- se * time[[3]]
   
   return(list(price = price, se = se, time = time[[3]], seTime = seTime))
 }
@@ -416,24 +416,24 @@ for (r in rate){
       c <- paste0('k: ', k)
       
       asian[["cmc"]][[a]][[b]][[c]] <- asianCMC(s, k, r, v, dt, ts, mat, n)
-      asian[["av"]][[a]][[b]][[c]]  <- asianAV( s, k, r, v, dt, ts, mat, n)
-      asian[["cv"]][[a]][[b]][[c]]  <- asianCV( s, k, r, v, dt, ts, mat, n)
-      asian[['cvS']][[a]][[b]][[c]] <- asianTwoCV( s, k, r, v, dt, ts, mat, n, CV = 'stock')
-      asian[['cvE']][[a]][[b]][[c]] <- asianTwoCV( s, k, r, v, dt, ts, mat, n, CV = 'euro')
-      asian[['cv3']][[a]][[b]][[c]] <- asianThreeCV( s, k, r, v, dt, ts, mat, n)
-      asian[["is"]][[a]][[b]][[c]]  <- asianIS( s, k, r, v, dt, ts, mat, n)
-      asian[["ss"]][[a]][[b]][[c]]  <- asianSS( s, k, r, v, dt, ts, mat, n, m, p)
-      asian[["isss"]][[a]][[b]][[c]]  <- asianISSS( s, k, r, v, dt, ts, mat, n, m, p)
+      # asian[["av"]][[a]][[b]][[c]]  <- asianAV( s, k, r, v, dt, ts, mat, n)
+      # asian[["cv"]][[a]][[b]][[c]]  <- asianCV( s, k, r, v, dt, ts, mat, n)
+      # asian[['cvS']][[a]][[b]][[c]] <- asianTwoCV( s, k, r, v, dt, ts, mat, n, CV = 'stock')
+      # asian[['cvE']][[a]][[b]][[c]] <- asianTwoCV( s, k, r, v, dt, ts, mat, n, CV = 'euro')
+      # asian[['cv3']][[a]][[b]][[c]] <- asianThreeCV( s, k, r, v, dt, ts, mat, n)
+      # asian[["is"]][[a]][[b]][[c]]  <- asianIS( s, k, r, v, dt, ts, mat, n)
+      # asian[["ss"]][[a]][[b]][[c]]  <- asianSS( s, k, r, v, dt, ts, mat, n, m, p)
+      # asian[["isss"]][[a]][[b]][[c]]  <- asianISSS( s, k, r, v, dt, ts, mat, n, m, p)
     }
-    asian[["cmc"]][[a]][[b]] <- do.call(cbind, asian[["cmc"]][[a]][[b]])
-    asian[["av"]][[a]][[b]] <- do.call(cbind, asian[["av"]][[a]][[b]])
-    asian[["cv"]][[a]][[b]] <- do.call(cbind, asian[["cv"]][[a]][[b]])
-    asian[["cvS"]][[a]][[b]] <- do.call(cbind, asian[["cvS"]][[a]][[b]])
-    asian[["cvE"]][[a]][[b]] <- do.call(cbind, asian[["cvE"]][[a]][[b]])
-    asian[["cv3"]][[a]][[b]] <- do.call(cbind, asian[["cv3"]][[a]][[b]])
-    asian[["is"]][[a]][[b]] <- do.call(cbind, asian[["is"]][[a]][[b]])
-    asian[["ss"]][[a]][[b]] <- do.call(cbind, asian[["ss"]][[a]][[b]])
-    asian[["isss"]][[a]][[b]] <- do.call(cbind, asian[["isss"]][[a]][[b]])
+    asian[["cmc"]][[a]][[b]]  <- as.data.frame(do.call(cbind, asian[["cmc"]][[a]][[b]] ))
+    asian[["av"]][[a]][[b]]   <- as.data.frame(do.call(cbind, asian[["av"]][[a]][[b]]  ))
+    asian[["cv"]][[a]][[b]]   <- as.data.frame(do.call(cbind, asian[["cv"]][[a]][[b]]  ))
+    asian[["cvS"]][[a]][[b]]  <- as.data.frame(do.call(cbind, asian[["cvS"]][[a]][[b]] ))
+    asian[["cvE"]][[a]][[b]]  <- as.data.frame(do.call(cbind, asian[["cvE"]][[a]][[b]] ))
+    asian[["cv3"]][[a]][[b]]  <- as.data.frame(do.call(cbind, asian[["cv3"]][[a]][[b]] ))
+    asian[["is"]][[a]][[b]]   <- as.data.frame(do.call(cbind, asian[["is"]][[a]][[b]]  ))
+    asian[["ss"]][[a]][[b]]   <- as.data.frame(do.call(cbind, asian[["ss"]][[a]][[b]]  ))
+    asian[["isss"]][[a]][[b]] <- as.data.frame(do.call(cbind, asian[["isss"]][[a]][[b]]))
   }
 }
 # 

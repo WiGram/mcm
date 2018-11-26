@@ -106,8 +106,9 @@ euroCMC <- function(s, k, r, v, mat, ts, n){
   price <- mean(c)
   se    <- sd(c) / sqrt(n)
   time  <- proc.time() - ptm
+  seTime <- se * time[[3]]
   
-  return(list(price = price, se = se, time = time[[3]]))
+  return(list(price = price, se = se, time = time[[3]], seTime = seTime))
 }
 
 euroAV <- function(s, k, r, v, mat, ts, n){
@@ -121,8 +122,9 @@ euroAV <- function(s, k, r, v, mat, ts, n){
   price <- mean(c)
   se    <- sd(c) / sqrt(n)
   time  <- proc.time() - ptm
+  seTime <- se * time[[3]]
   
-  return(list(price = price, se = se, time = time[[3]]))
+  return(list(price = price, se = se, time = time[[3]], seTime = seTime))
 }
 
 euroCV <- function(s, k, r, v, mat, ts, n){
@@ -139,8 +141,9 @@ euroCV <- function(s, k, r, v, mat, ts, n){
   price <- mean(c - beta * (stock - muS))
   se    <- sd(c - beta * (stock - muS)) / sqrt(n)
   time  <- proc.time() - ptm
+  seTime <- se * time[[3]]
   
-  return(list(price = price, se = se, time = time[[3]]))
+  return(list(price = price, se = se, time = time[[3]], seTime = seTime))
 }
 
 euroIS <- function(s, k, r, v, mat, ts, n){
@@ -158,8 +161,9 @@ euroIS <- function(s, k, r, v, mat, ts, n){
   price <- mean(c)
   se    <- sd(c) / sqrt(n)
   time  <- proc.time() - ptm
+  seTime <- se * time[[3]]
   
-  return(list(price = price, se = se, time = time[[3]]))
+  return(list(price = price, se = se, time = time[[3]], seTime = seTime))
 }
 
 euroSS <- function(s, k, r, v, mat, ts, n, m){
@@ -177,8 +181,32 @@ euroSS <- function(s, k, r, v, mat, ts, n, m){
   price <- sum(p * colMeans(c))
   se    <- sdSS(c, l, p, q) / sqrt(n)
   time  <- proc.time() - ptm
+  seTime <- se * time[[3]]
   
-  return(list(price = price, se = se, time = time[[3]]))
+  return(list(price = price, se = se, time = time[[3]], seTime = seTime))
+}
+
+euroISSS <- function(s, k, r, v, mat, ts, n, m){
+  l <- n / m
+  p <- 1 / l
+  q <- m / n
+  
+  ptm <- proc.time()
+
+  mu  <- findShift(r, v, k, ts, dt)
+  
+  z     <- euroRandomSS(m, l) + mu
+  
+  stock <- euroStock(s, r, v, mat, z)
+  c     <- exp( - r * mat) * pmax(stock - k, 0) * 
+    exp( - z * mu + 0.5 * mu ** 2)
+  
+  price  <- sum(p * colMeans(c))
+  se     <- sdSS(c, l, p, q) / sqrt(n)
+  time   <- proc.time() - ptm
+  seTime <- se * time[[3]]
+  
+  return(list(price = price, se = se, time = time[[3]], seTime = seTime))
 }
 
 # ============================================= #
@@ -210,15 +238,17 @@ euros <- list()
 for (i in 1:len){
   n     <- n_sims[i]
   a <- paste0('n: ', n)
-  euros[["cmc"]][[a]] <- euroCMC(s, k, r, v, mat, ts, n)
-  euros[["av"]][[a]]  <- euroAV(s, k, r, v, mat, ts, n)
-  euros[["cv"]][[a]]  <- euroCV(s, k, r, v, mat, ts, n)
-  euros[["is"]][[a]]  <- euroIS(s, k, r, v, mat, ts, n)
-  euros[["ss"]][[a]]  <- euroSS(s, k, r, v, mat, ts, n, m)
+  euros[["cmc"]][[a]]  <- euroCMC( s, k, r, v, mat, ts, n)
+  euros[["av"]][[a]]   <- euroAV(  s, k, r, v, mat, ts, n)
+  euros[["cv"]][[a]]   <- euroCV(  s, k, r, v, mat, ts, n)
+  euros[["is"]][[a]]   <- euroIS(  s, k, r, v, mat, ts, n)
+  euros[["ss"]][[a]]   <- euroSS(  s, k, r, v, mat, ts, n, m)
+  euros[["isss"]][[a]] <- euroISSS(s, k, r, v, mat, ts, n, m)
 }
 
-euros[["cmc"]] <- do.call(rbind, euros[["cmc"]])
-euros[["av"]] <- do.call(rbind, euros[["av"]])
-euros[["cv"]] <- do.call(rbind, euros[["cv"]])
-euros[["is"]] <- do.call(rbind, euros[["is"]])
-euros[["ss"]] <- do.call(rbind, euros[["ss"]])
+euros[["cmc"]]  <- as.data.frame(do.call(rbind, euros[["cmc"]] ))
+euros[["av"]]   <- as.data.frame(do.call(rbind, euros[["av"]]  ))
+euros[["cv"]]   <- as.data.frame(do.call(rbind, euros[["cv"]]  ))
+euros[["is"]]   <- as.data.frame(do.call(rbind, euros[["is"]]  ))
+euros[["ss"]]   <- as.data.frame(do.call(rbind, euros[["ss"]]  ))
+euros[["isss"]] <- as.data.frame(do.call(rbind, euros[["isss"]]))
