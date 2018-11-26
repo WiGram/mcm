@@ -406,6 +406,10 @@ l <- n / m
 q <- m / n
 p <- m / n
 
+# ============================================= #
+# ===== Running the programme ================= #
+# ============================================= #
+
 asian <- list()
 
 for (r in rate){
@@ -416,14 +420,14 @@ for (r in rate){
       c <- paste0('k: ', k)
       
       asian[["cmc"]][[a]][[b]][[c]] <- asianCMC(s, k, r, v, dt, ts, mat, n)
-      # asian[["av"]][[a]][[b]][[c]]  <- asianAV( s, k, r, v, dt, ts, mat, n)
-      # asian[["cv"]][[a]][[b]][[c]]  <- asianCV( s, k, r, v, dt, ts, mat, n)
-      # asian[['cvS']][[a]][[b]][[c]] <- asianTwoCV( s, k, r, v, dt, ts, mat, n, CV = 'stock')
-      # asian[['cvE']][[a]][[b]][[c]] <- asianTwoCV( s, k, r, v, dt, ts, mat, n, CV = 'euro')
-      # asian[['cv3']][[a]][[b]][[c]] <- asianThreeCV( s, k, r, v, dt, ts, mat, n)
-      # asian[["is"]][[a]][[b]][[c]]  <- asianIS( s, k, r, v, dt, ts, mat, n)
-      # asian[["ss"]][[a]][[b]][[c]]  <- asianSS( s, k, r, v, dt, ts, mat, n, m, p)
-      # asian[["isss"]][[a]][[b]][[c]]  <- asianISSS( s, k, r, v, dt, ts, mat, n, m, p)
+      asian[["av"]][[a]][[b]][[c]]  <- asianAV( s, k, r, v, dt, ts, mat, n)
+      asian[["cv"]][[a]][[b]][[c]]  <- asianCV( s, k, r, v, dt, ts, mat, n)
+      asian[['cvS']][[a]][[b]][[c]] <- asianTwoCV( s, k, r, v, dt, ts, mat, n, CV = 'stock')
+      asian[['cvE']][[a]][[b]][[c]] <- asianTwoCV( s, k, r, v, dt, ts, mat, n, CV = 'euro')
+      asian[['cv3']][[a]][[b]][[c]] <- asianThreeCV( s, k, r, v, dt, ts, mat, n)
+      asian[["is"]][[a]][[b]][[c]]  <- asianIS( s, k, r, v, dt, ts, mat, n)
+      asian[["ss"]][[a]][[b]][[c]]  <- asianSS( s, k, r, v, dt, ts, mat, n, m, p)
+      asian[["isss"]][[a]][[b]][[c]]  <- asianISSS( s, k, r, v, dt, ts, mat, n, m, p)
     }
     asian[["cmc"]][[a]][[b]]  <- as.data.frame(do.call(cbind, asian[["cmc"]][[a]][[b]] ))
     asian[["av"]][[a]][[b]]   <- as.data.frame(do.call(cbind, asian[["av"]][[a]][[b]]  ))
@@ -436,9 +440,7 @@ for (r in rate){
     asian[["isss"]][[a]][[b]] <- as.data.frame(do.call(cbind, asian[["isss"]][[a]][[b]]))
   }
 }
-# 
-# cmcPs$`r: 0.05`
-# avPs$`r: 0.05`
-# cvPs$`r: 0.05`
-# isPs$`r: 0.05`
-# ssPs$`r: 0.05`
+
+# ============================================= #
+# ===== Fin =================================== #
+# ============================================= #
