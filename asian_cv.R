@@ -30,13 +30,13 @@ beta_fct <- function(c_1, c_1_bar, c_2, c_2_bar){
 # We want to first simulate the log of the stock
 set.seed(12345)
 n <- 10000
-s <- 50
-k <- 45
+s <- 100
+k <- 110
 r <- 0.05
-v <- 0.3
+v <- 0.20
 
 mat <- 1        # e.g. four months
-ts  <- 250       # time steps, e.g. 22 per month
+ts  <- 500       # time steps, e.g. 22 per month
 dt  <- mat / ts
 
 z <- rnorm(ts * n, 0, 1)

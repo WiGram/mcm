@@ -302,7 +302,7 @@ asianIS <- function(s, k, r, v, dt, ts, mat, n){
   arithMean <- rowMeans(stock)
   
   c <- exp(-r * mat) * pmax(arithMean - k, 0) * 
-    exp(-rowSums(z %*% diag(mu)) + 
+    exp(-rowSums(z %*% mu) + 
           0.5 * c(mu %*% mu))
   
   price <- mean(c)
@@ -394,9 +394,9 @@ dt     <- mat / ts
 # strike <- 110
 # rate   <- 0.05
 # sigma  <- 0.30
-strike <- seq(90, 110, 10)
-rate   <- seq(0.03,0.05,0.02)
-sigma  <- seq(0.2,0.30,0.1)
+strike <- seq(110, 110, 10)
+rate   <- seq(0.05,0.05,0.02)
+sigma  <- seq(0.2,0.40,0.1)
 
 # bridge parameters
 m <- 10
